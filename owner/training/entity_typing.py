@@ -315,7 +315,7 @@ class EntityTypingTrainer(BaseTrainer):
                             entity_texts=entity_texts,
                             model_name=et_config.get('ollama_model_name', 'llama3'),
                             n_samples=et_config.get('cluster_name_n_samples', 16),
-                            use_mmr=et_config.get('cluster_name_use_mmr', False),
+                            use_mmr=et_config.get('cluster_name_ollama_use_mmr', False),
                             mmr_lambda=et_config.get('cluster_name_mmr_lambda', 0.7),
                             seed=et_config.get('cluster_name_seed', None),
                             max_words=et_config.get('cluster_name_max_words', 3),
@@ -328,7 +328,7 @@ class EntityTypingTrainer(BaseTrainer):
                             entity_texts=entity_texts,
                             plm_name=et_config.get('mlm_plm_name', et_config['plm_name']),
                             num_exemplars=et_config.get('cluster_name_num_exemplars', 16),
-                            use_mmr=et_config.get('cluster_name_use_mmr', True),
+                            use_mmr=et_config.get('cluster_name_mlm_use_mmr', True),
                             mmr_lambda=et_config.get('cluster_name_mmr_lambda', 0.7),
                             naming_template=et_config.get(
                                 'cluster_name_prompt_template',
