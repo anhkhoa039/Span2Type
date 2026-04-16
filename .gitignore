@@ -4,6 +4,16 @@ mlartifacts/
 runner_config.toml
 checkpoints/
 /config.toml
+outputs/
+Entity-Detection
+CrossNER
+report_figs
+WIN-thesis-template/reference paper
+run.sh
+test.ipynb
+CLAUDE.md
+BERT_Report
+configs
 
 # Created by https://www.toptal.com/developers/gitignore/api/python,visualstudiocode,git,jupyternotebooks
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,visualstudiocode,git,jupyternotebooks
