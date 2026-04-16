@@ -6,9 +6,9 @@ save_path = "checkpoints/owner/new_model"
 [data]
 train_dataset_path = "data/conll2003/train.json"
 train_dataset_name = "conll2003"
-test_dataset_path = "data/crossner/music/test.json"
-test_dataset_v2_path = "data/crossner/music/music_test_converted.json"
-test_dataset_name = "crossner-music"
+test_dataset_path = "data/crossner/literature/test.json"
+test_dataset_v2_path = "data/crossner/literature/literature_test_converted.json"
+test_dataset_name = "crossner-literature"
 
 [mention_detection]
 plm_name = "microsoft/deberta-v3-base"

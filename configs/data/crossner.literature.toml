@@ -1,0 +1,5 @@
+data_type = "crossner"
+train_path = "./data/.raw/crossner/literature/train.txt"
+dev_path = "./data/.raw/crossner/literature/dev.txt"
+test_path = "./data/.raw/crossner/literature/test.txt"
+output_folder = "/home/smallp/code/OWNER/data/crossner/literature"
