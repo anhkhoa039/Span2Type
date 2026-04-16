@@ -1,0 +1,35 @@
+\clearpage
+
+\addcontentsline{toc}{chapter}{Abstract}
+\begin{center}
+	\textbf{\large Abstract}
+\end{center}
+
+Named Entity Recognition (NER) in new or specialized domains often requires manually defining entity types and annotating data, a process that is costly and demands domain expertise. 
+This limitation motivates \textbf{open-world NER}, where the goal is not only to detect entity mentions from unlabeled text but also to \textbf{discover and name latent entity types} automatically. 
+In this thesis, we propose \textbf{SAGE}, a semantic-augmented, graph-based framework for open-world entity typing and ontology induction.
+
+SAGE operates without gold entity labels in the target corpus. It first obtains high-recall entity mentions by aggregating predictions from multiple distilled NER teachers, 
+such as GLiNER and UniversalNER, using a small, domain-agnostic label bank solely for span proposal. Each mention is then represented by a \textbf{type signature} that combines contextual semantic 
+embeddings, teacher-generated type phrases, and corpus-grounded type evidence mined from definitional and Hearst-style patterns. Using these signatures, SAGE constructs a similarity graph over mentions and applies constraint-aware community detection to induce an initial set of entity type clusters without predefining the number of types.
+
+To address common clustering failures in open-world settings, we introduce a \textbf{Critic refinement module} that evaluates cluster quality through learnability. 
+A lightweight classifier is trained to predict cluster assignments, and its confusion patterns and prediction entropy are used to identify over-merged and internally inconsistent clusters, 
+which are iteratively merged or split in a label-free manner. Finally, SAGE generates human-readable entity type names by mining candidate phrases from clusters and selecting concise, 
+specific labels using an open-source language model.
+
+Experiments on multiple public benchmarks across general, noisy, and biomedical domains demonstrate that SAGE improves type discovery quality and produces more accurate and 
+stable entity class names compared to clustering-only and teacher-only baselines. These results show that SAGE provides a practical and effective solution 
+for automatically constructing entity type inventories when deploying NER systems in new domains.
+
+
+\vspace*{1cm}
+
+\noindent\textbf{Keywords:} Open-world Named Entity Recognition; Entity Type Discovery; Ontology Induction; Entity Class Name Generation; Graph-based Clustering; Teacher-Augmented Learning; GLiNER; Universal NER; Self-supervised Refinement; Learnability-based Clustering; Domain Adaptation
+
+\begin{comment}
+
+
+\end{comment}
+
+

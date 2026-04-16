@@ -1,0 +1,18 @@
+\begin{table*}[t]
+    \centering
+    \footnotesize
+    \caption{Ablation study of Span2Type components across different domains. Performance is measured using F1 score. Best results are in bold.}
+    \label{tab:ablation_study}
+    \resizebox{\textwidth}{!}{
+    \begin{tabular}{l|c|c|c|c|c|c}
+    \toprule
+    Method & AI & Liter. & Music & Politics & Science & Avg. \\
+    \midrule
+    OWNER (CoNLL) w/o all components & 44.3 & 46.6 & 50.1 & 53.7 & 52.3 & 49.4 \\
+    Span2Type w/o Soft Prompt        & 52.3 & 56.3 & 57.5 & 63.9 & 62.8 & 58.6 \\
+    Span2Type w/o Ensemble MD        & 49.31 & 53.01 & 58.84 & 64.09 & 63.75 & 57.80 \\
+    \textbf{Span2Type (Full Model)}  & \textbf{57.6} & \textbf{56.9} & \textbf{60.0} & \textbf{66.0} & \textbf{66.3} & \textbf{61.4} \\
+    \bottomrule
+    \end{tabular}
+    }
+    \end{table*}

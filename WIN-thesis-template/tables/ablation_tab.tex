@@ -1,0 +1,22 @@
+\begin{table}[t]
+\centering
+\footnotesize
+\caption{Ablation study on OntoNotes and WNUT-17.
+Each variant removes or replaces one component of ICC-Full.}
+\label{tab:ablation}
+\resizebox{\columnwidth}{!}{
+\begin{tabular}{l|ccc|ccc}
+\toprule
+\multirow{2}{*}{Method}
+& \multicolumn{3}{c|}{OntoNotes}
+& \multicolumn{3}{c}{WNUT-17} \\
+& Micro & Macro & AMI & Micro & Macro & AMI \\
+\midrule
+ICC-BIO \\
+ICC-KMeans \\
+ICC-NoCritic \\
+\textbf{ICC-Full} \\
+\bottomrule
+\end{tabular}
+}
+\end{table}

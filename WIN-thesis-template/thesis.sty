@@ -1,0 +1,194 @@
+\usepackage[english]{babel} % Use the appropriate language
+\sloppy % Relaxes LaTeX's strict rules for line breaks
+\usepackage{graphicx}
+\usepackage{latexsym}
+%\usepackage{subfigure}
+\usepackage{subcaption}
+%\usepackage{palatino}
+\usepackage[top=3.2cm, left=3.8cm, right=2.5cm, bottom=2.5cm]{geometry}
+%\oddsidemargin = .5in
+%\textwidth = 6in
+
+%\headheight = 0in
+%\headsep = 0in
+%\topmargin = .25in
+%\textheight = 8.5in
+
+\floatsep = .29in
+\textfloatsep = \floatsep
+\intextsep = \floatsep
+
+\bibliographystyle{ieeetran}
+
+\setcounter{secnumdepth}{3}
+\setcounter{tocdepth}{3}
+
+% Almost everything is double spaced.
+%
+\newcommand{\spacing}{1.8}
+\renewcommand{\baselinestretch}{\spacing}
+
+% Footnotes are to be single spaced.
+%
+\newcommand{\munfootnote}[1]{%
+    \renewcommand{\baselinestretch}{1.0}%
+    \footnote{#1}%
+    \renewcommand{\baselinestretch}{\spacing}%
+}
+
+% Lengthy quotes must also be single spaced.
+% We provide a parameter for the citation label too.
+%
+\newcommand{\munquote}[2]{%
+    \renewcommand{\baselinestretch}{1.0}%
+    \normalsize
+    \begin{quote}{``\textsl{#1}''~\cite{#2}}\end{quote}
+    \renewcommand{\baselinestretch}{\spacing}%
+    \normalsize
+}
+
+% Command for creating the thesis title page in accordance with the
+% requirements of the School of Graduate Studies.
+% For usage example, see thesis.tex.
+%
+\newcommand{\thesistitle}[4]{%
+\thispagestyle{empty}
+\begin{center}
+
+\renewcommand{\baselinestretch}{1.0}%
+\textbf{\Large #1}
+\renewcommand{\baselinestretch}{\spacing}%
+
+\vspace{1.5cm}
+
+%by \\
+%\copyright\ #2
+
+\vspace{\fill}
+
+\vspace{\fill}
+
+A thesis submitted to \\
+Chang Gung University\\
+in fulfilment of the \\
+requirements for the degree of \\
+#2 \\
+
+
+by \\
+#3
+\vspace{\fill}
+
+Advisor:
+#4\\
+\vspace{\fill}
+Electrical Engineering, Division of Computer Science and Information Engineering\\
+CHANG GUNG UNIVERSITY\\
+TAIWAN (Republic of China)
+
+\vspace{\fill}
+
+%#4 \\
+
+%\vspace{\fill}
+
+%St. John's %\hfill %Newfoundland
+\end{center}
+}
+
+%
+% The \munepsfig command is used to insert a new EPS figure
+% into our document.  Usage is:
+%
+%   \munepsfig[scale]{filename}{caption}
+%
+% Note:
+%   - scale is optional (defaults to 1.0)
+%   - Assumes that the EPS file is in the 'figures' directory.
+%   - 'filename' should not include the filename extension.
+%   - 'filename' also serves as the label for the figure.
+%   - Ideally, we'd want to create a \newenvironment to do this
+%     but because the caption must appear below the figure, this
+%     doesn't appear to be possible.
+%
+\newcommand{\munepsfig}[3][1.0]{%
+    \begin{figure}[!htbp]
+    \centering
+    \vspace{2mm}
+    \scalebox{#1}{\includegraphics{figures/#2.eps}}
+    \caption{#3}
+    \label{fig:#2}
+    \end{figure}
+}
+
+%\newcommand{\munepssubfig}[3][1.0]{%
+%\begin{figure}
+%\centering
+%\vspace{2mm}
+%{\subfigure[!htbp]
+%\scalebox{#1}{\includegraphics{figures/#1a.eps}}
+%\caption{#3}
+%\label{subfig:#1a}}
+%
+%{\subfigure[!htbp]
+%\scalebox{#1}{\includegraphics{figures/#1b.eps}}
+%\caption{#3}
+%\label{subfig:#1b}}
+%\end{figure}
+
+%
+% The \munfig command is used to insert 'textual' figures
+% into our document.  Usage is:
+%
+%   \munfig{caption}{label}{content}
+%
+\newcommand{\munfig}[3]{%
+    \begin{figure}[!htbp]
+    \centering
+    \vspace{2mm}
+    #3
+    \caption{#1}
+    \label{fig:#2}
+    \end{figure}
+}
+
+%
+% The \muntab command is used to insert a new table into our document.
+% Usage is:
+%
+%   \muntab{table_format}{label}{caption}{table_contents}
+%
+% Note that we could have created a \newenvironment, but opted for
+% a \newcommand so as to be consistent with the \munepsfig command.
+%
+\newcommand{\muntab}[4]{%
+    \begin{table}[!htbp]
+    \centering
+    \caption{#3}
+    \label{tab:#2}
+    \vspace{2mm}
+    \begin{tabular}{#1}
+    #4
+    \end{tabular}
+    \end{table}
+}
+
+%
+% The \muneqn command is used to add an equation to the thesis.
+% Usage is
+%
+%   \muneqn{label}{equation_body}
+%
+\newcommand{\muneqn}[2]{%
+    \begin{equation}
+    \centering
+    \label{eqn:#1}
+    #2
+    \end{equation}
+}
+
+%
+% For theorems and corollaries.
+%
+\newtheorem{cor}{Corollary}
+\newtheorem{thm}{Theorem}

@@ -1,0 +1,420 @@
+\documentclass[14pt]{extreport}
+\usepackage{thesis}
+\usepackage{background} % For watermark
+\usepackage{etoolbox}
+\usepackage{caption}
+\usepackage{verbatim}
+\usepackage{amsmath}
+\usepackage[hidelinks]{hyperref}
+\usepackage{xcolor}
+\usepackage{graphicx}
+%\usepackage{kbordermatrix} % Commented out - not needed unless you use bordered matrices
+\usepackage[export]{adjustbox}
+\usepackage{algorithm,algpseudocode}
+\usepackage{multirow}
+\usepackage{cite}
+\usepackage{gensymb} % For degree symbol
+\newtheorem{theorem}{Theorem}
+\renewcommand{\algorithmicrequire}{\textbf{Input:}}
+\renewcommand{\algorithmicensure}{\textbf{Output:}}
+\usepackage{amsfonts}
+\usepackage{array}
+\usepackage{tabularx}
+\newtheorem{definition}{Definition}
+\newcommand{\var}[1]{\mathit{#1}}
+\newcommand*\BitAnd{\mathrel{\&}}
+\newcommand{\tabitem}{~~\llap{\textbullet}~~}
+\usepackage{longtable}
+\usepackage{booktabs}
+\usepackage[utf8]{inputenc}
+\usepackage{etoolbox}
+\usepackage{float} % For the H specifier
+\usepackage{placeins} % For \FloatBarrier
+\usepackage{lscape}
+\usepackage{amssymb}
+%\usepackage{draftwatermark} % For watermark
+\usepackage{geometry} % For temporary margin changes
+
+\newtheorem{mydef}{Definition}
+\newcommand{\tabincell}[2]{\begin{tabular}{{c}@{}#1@{}}#2\end{tabular}}
+
+% Font configuration - correct order is important!
+\usepackage{fontspec}
+\usepackage{xeCJK}
+
+% Set fonts
+\setmainfont{Times New Roman}
+% Configure CJK font with auto fake bold/italic for better compatibility
+% On macOS, use "Kaiti TC" (Traditional Chinese) or "Kaiti SC" (Simplified Chinese)
+% On Windows, this would be "標楷體" or "KaiTi"
+\setCJKmainfont{Kaiti TC}[
+  BoldFont=Kaiti TC,
+  AutoFakeBold=2.5,
+  AutoFakeSlant=0.2
+]
+\XeTeXlinebreakskip = 0pt plus 1pt
+\XeTeXlinebreaklocale "zh"
+\setlength{\parskip}{0.3cm}
+\usepackage{titlesec}
+\titleformat{\chapter}[display]
+{\normalfont\LARGE\bfseries}{\chaptertitlename\ \thechapter}{0pt}{\LARGE}
+\titlespacing*{\chapter}{0pt}{0pt}{12pt}
+% Custom section format with 16pt font size
+\titleformat{\section}
+  {\normalfont\fontsize{16pt}{16pt}\selectfont\bfseries} % Set font size to 16pt
+  {\thesection}{1em}{}
+\titlespacing*{\section}{0pt}{0.5\baselineskip}{0\baselineskip}
+\linespread{1.5}\selectfont
+
+% Custom command to remove chapter spacing
+\newcommand{\nochapterspacing}[1]{%
+  \cleardoublepage % Ensure proper page break for chapters
+  \titlespacing*{\chapter}{0pt}{0pt}{5pt}%
+  \chapter{#1}%
+  \label{ch:#1}% Automatic label based on chapter title
+  \titlespacing*{\chapter}{0pt}{0pt}{5pt}%
+}
+
+% Custom command to remove section spacing
+\newcommand{\nosectionspacing}[1]{%
+\begingroup
+  \titlespacing*{\section}{0pt}{0pt}{0pt}
+  \section{#1}
+  \titlespacing*{\section}{0pt}{0\baselineskip}{0\baselineskip}
+\endgroup
+}
+
+\newlength{\originaltextwidth}
+\AtBeginDocument{\setlength{\originaltextwidth}{\textwidth}}
+
+% WATERMARK SETUP - PROPER VERSION
+\backgroundsetup{
+    contents={\includegraphics{Logo.jpg}},
+    scale=1,
+    angle=0,
+    opacity=0.5,
+    position=current page.north west, % Anchor at top-left of page
+    hshift=3.8cm + 0.5\originaltextwidth, % Center in text area
+    vshift=-0.5\paperheight, % Vertical center
+    pages=all, % Explicitly apply to all pages
+    color=black % Important for proper opacity rendering
+}
+
+\begin{document}
+%\nocite{*}
+\clearpage
+\thispagestyle{empty}
+
+%\SetWatermarkText{{\includegraphics[angle=-45]{Logo.jpg}}}
+\pagenumbering{gobble}
+
+% Appendix A of thesis template
+% Temporarily remove margins for one page
+%\newgeometry{margin=0cm} % No margins
+%%\NoBgThispage
+%\begin{figure}[p] % 'p' ensures it's on its own page
+%    \centering
+%    \includegraphics[width=\paperwidth,height=\paperheight,keepaspectratio]{Appendix_A}
+%\end{figure}
+%\restoregeometry % Restore original margins
+
+
+\clearpage
+\thispagestyle{empty}
+\input{acknowledge}
+\clearpage	
+
+\newpage
+\pagenumbering{roman}
+
+%中文摘要 Chinese abstract
+\input{abstract_c}
+
+%英文摘要 English abstract
+\input{abstract}
+\clearpage
+
+\tableofcontents
+
+\listoftables
+
+\listoffigures
+\clearpage	
+
+\pagenumbering{arabic}
+
+%Reset citation number
+\makeatletter
+\setcounter{enumiv}{0}
+\makeatother
+
+\chapter{Introduction}\label{ch-Introduction}
+
+
+
+\section{Motivation} \label{sec:Challenges}
+
+Motivation here
+
+\section{Contributions} \label{sec:Overview}
+
+Contributions here 
+\begin{itemize}
+\item We propose ...
+\item Experiments show...
+\end{itemize}
+
+
+\nochapterspacing{Related Work}\label{ch:Work}
+
+\section{Methodology}
+
+\subsection{Problem Definition}
+Let $D_T$ be an unlabeled target-domain corpus consisting of sentences or documents.
+No gold entity spans, entity types, or ontology are provided.
+The goal is to automatically:
+\begin{enumerate}
+    \item detect entity mentions from $D_T$,
+    \item discover latent entity types by grouping mentions,
+    \item generate a concise, human-readable name for each discovered type.
+\end{enumerate}
+
+The system must operate in a fully open-world setting; gold labels are used only for evaluation.
+
+\subsection{Framework Overview}
+The proposed framework, \textbf{SAGE}, consists of five stages:
+\begin{enumerate}
+    \item Multi-teacher mention proposal
+    \item Type signature construction
+    \item Graph-based clustering with soft constraints
+    \item Cluster--Critic refinement
+    \item Two-stage entity type naming
+\end{enumerate}
+
+Each stage is designed to progressively reduce noise while improving semantic coherence and interpretability.
+
+---
+
+\subsection{Module A: Multi-teacher Mention Proposal}
+
+\paragraph{Goal}
+Obtain a high-recall set of candidate entity spans while avoiding reliance on any single NER ontology.
+
+\paragraph{Label Bank Construction}
+A small, domain-agnostic label bank $\mathcal{L}$ is used only for span proposal, not as target types:
+\[
+\mathcal{L} = \{\texttt{person}, \texttt{organization}, \texttt{location}, \texttt{event}, \texttt{product}, \texttt{misc}\}
+\]
+These labels are chosen to be coarse, generic, and reusable across domains.
+
+\paragraph{Teachers}
+We employ multiple distilled NER models:
+\begin{itemize}
+    \item \textbf{GLiNER}: label-bank-driven span detection
+    \item \textbf{UniversalNER}: natural-language type prediction
+    \item \textbf{GLiNER2} (optional): schema-conditioned extraction
+\end{itemize}
+
+Each teacher proposes spans $(m_i)$ with confidence scores.
+
+\paragraph{Aggregation}
+All spans are merged using a union strategy. Each span is assigned a confidence score based on:
+\begin{itemize}
+    \item number of teachers agreeing,
+    \item model confidence,
+    \item heuristics (span length, stopwords, casing).
+\end{itemize}
+
+The output is:
+\[
+M = \{(m_i, x_i, s_i)\}_{i=1}^N
+\]
+where $m_i$ is the span, $x_i$ its context, and $s_i$ its confidence.
+
+---
+
+\subsection{Module B: Type Signature Construction}
+
+\paragraph{Motivation}
+Masked-LM prompts such as ``$m$ is a [MASK]'' are brittle and fail across entity categories.
+We instead construct corpus-grounded, multi-view representations.
+
+\paragraph{View 1: Semantic Span Embedding}
+Each mention is embedded using a contextual encoder:
+\[
+z_i = \text{Encoder}(x_i, m_i)
+\]
+Span representations are computed via token averaging or start--end concatenation.
+
+\paragraph{View 2: Corpus-grounded Type Evidence}
+Type phrases are mined directly from the corpus using linguistic patterns:
+\begin{itemize}
+    \item copula: ``$X$ is a $Y$''
+    \item apposition: ``$X$, a $Y$,''
+    \item parenthetical: ``$X$ ($Y$)''
+    \item Hearst patterns: ``$Y$ such as $X$''
+\end{itemize}
+
+This yields a phrase set $P_i$ for each mention.
+
+\paragraph{Final Type Signature}
+\[
+S_i = [\, z_i \,;\, \text{Embed}(P_i) \,]
+\]
+
+This representation supports both clustering and name generation.
+
+---
+
+\subsection{Module C: Graph-based Clustering with Constraints}
+
+\paragraph{Graph Construction}
+We construct a $k$-nearest-neighbor graph:
+\begin{itemize}
+    \item nodes: mentions $m_i$
+    \item edges: cosine similarity between $S_i$
+\end{itemize}
+
+Edge weights:
+\[
+w_{ij} = \alpha \cdot \text{sim}(z_i,z_j)
+       + \beta \cdot \text{sim}(P_i,P_j)
+\]
+
+\paragraph{Soft Constraints}
+Teacher outputs induce pairwise constraints:
+\begin{itemize}
+    \item \textbf{must-link}: boost edge weight if teachers agree
+    \item \textbf{cannot-link}: penalize or remove edge if teachers disagree
+\end{itemize}
+
+\paragraph{Community Detection}
+We apply Leiden or Louvain community detection to obtain initial clusters:
+\[
+\mathcal{C}_0 = \{C_1,\dots,C_K\}
+\]
+without specifying $K$.
+
+---
+
+\subsection{Module D: Cluster--Critic Refinement}
+
+\paragraph{Core Idea}
+A valid entity type should be \emph{learnable}.
+Clusters that are difficult to predict indicate semantic inconsistency.
+
+\paragraph{Critic Training}
+A lightweight classifier is trained to predict cluster IDs:
+\[
+f_\theta(S_i) \rightarrow \hat{c}_i
+\]
+
+\paragraph{Diagnostics}
+From the Critic we compute:
+\begin{itemize}
+    \item confusion matrix between clusters,
+    \item prediction entropy within clusters,
+    \item constraint violations.
+\end{itemize}
+
+\paragraph{Refinement}
+\begin{itemize}
+    \item merge clusters with high mutual confusion,
+    \item split clusters with high internal entropy.
+\end{itemize}
+
+The process repeats until convergence.
+
+---
+
+\subsection{Module E: Entity Type Name Generation}
+
+\paragraph{Candidate Mining}
+For each cluster $C_k$, we collect:
+\begin{itemize}
+    \item frequent teacher type phrases,
+    \item frequent mined type phrases,
+    \item salient head nouns.
+\end{itemize}
+
+\paragraph{LLM-based Selection}
+An open-source instruction-tuned LLM selects:
+\begin{itemize}
+    \item a 1--4 word noun phrase as the class name,
+    \item a one-line definition.
+\end{itemize}
+
+---
+
+\section{Experimental Setup}
+
+\subsection{Datasets}
+We evaluate on:
+\begin{itemize}
+    \item OntoNotes 5.0 (general-domain)
+    \item WNUT-17 (noisy social media)
+    \item BC5CDR (biomedical)
+\end{itemize}
+
+Gold labels are used only for evaluation.
+
+---
+
+\subsection{Baselines}
+\begin{itemize}
+    \item Teacher-only (UniversalNER, GLiNER)
+    \item One-shot clustering (no refinement)
+    \item SAGE without graph
+    \item SAGE without constraints
+    \item SAGE without Critic
+\end{itemize}
+
+---
+
+\subsection{Evaluation Metrics}
+
+\paragraph{Clustering Quality}
+\begin{itemize}
+    \item AMI, ARI, NMI
+    \item Purity / Inverse Purity
+\end{itemize}
+
+\paragraph{Name Quality (Core Metric)}
+\begin{itemize}
+    \item correctness
+    \item specificity
+    \item coherence
+\end{itemize}
+
+Evaluated via human judgment or LLM-as-judge.
+
+---
+
+\section{Implementation Plan}
+
+\subsection{Minimal Version (Guaranteed Completion)}
+\begin{itemize}
+    \item GLiNER + UniversalNER span union
+    \item signature = semantic + mined phrases
+    \item graph clustering (single pass)
+    \item LLM naming
+\end{itemize}
+
+\subsection{Full Version}
+\begin{itemize}
+    \item add constraints
+    \item add Critic refinement
+    \item naming-aware refinement
+\end{itemize}
+
+---
+
+\section{Discussion}
+
+SAGE demonstrates that entity type discovery and naming can be achieved without gold labels by combining teacher guidance, graph structure, and learnability-based refinement. The Critic module is particularly effective at correcting clustering failures that similarity-based methods cannot detect.
+
+---
+
+\section{Conclusion}
+
+This thesis presents SAGE, a practical and interpretable framework for open-world entity type discovery. By replacing brittle prompt-based probing with corpus-grounded evidence and introducing Critic-based refinement, SAGE produces cleaner clusters and higher-quality entity class names, enabling NER deployment in new domains without manual ontology design.

@@ -1,12 +1,13 @@
 seed = 100
 model = "ner"
-save_state = "save_finetuned"
-save_path = "checkpoints/ner/conll2003/100"
+save_state = "load_finetuned"
+save_path = "checkpoints/owner/new_model"
 
 [data]
 train_dataset_path = "data/conll2003/train.json"
 train_dataset_name = "conll2003"
 test_dataset_path = "data/crossner/ai/test.json"
+test_dataset_v2_path = "data/crossner/ai/ai_test_converted.json"
 test_dataset_name = "crossner-ai"
 
 [mention_detection]
@@ -20,9 +21,30 @@ learning_rate = 2e-5
 template = "{sentence} {entity} is a [MASK]."
 plm_name = "bert-base-uncased"
 max_len = 256
-batch_size = 128
+batch_size = 64
 num_epochs = 4
-learning_rate = 2e-5
+learning_rate = 1e-4
 k_min = 2
 k_max = 30
 k_step = 2
+
+generate_cluster_names = true
+mlm_plm_name = "bert-base-uncased"
+cluster_name_backends = ["mlm", "ollama"]   # run both; or use a single string "mlm" | "ollama"
+ollama_model_name = "llama3"
+cluster_name_max_words = 3
+
+# Paper (Eq. 2) template — used when cluster_name_backend = "mlm"
+cluster_name_prompt_template = "{sentence} {entity} is a [MASK]."
+
+# Exemplar selection: MMR (use_mmr=true) or random sampling (use_mmr=false, paper baseline)
+cluster_name_use_mmr = true
+cluster_name_mmr_lambda = 0.7
+cluster_name_num_exemplars = 16   # for mlm backend (MMR or random)
+cluster_name_n_samples = 16       # for ollama backend (paper uses n=16)
+cluster_name_seed = 100
+
+use_soft_prompt = false
+train_plm = true
+num_soft_tokens = 5
+dropout = 0.1

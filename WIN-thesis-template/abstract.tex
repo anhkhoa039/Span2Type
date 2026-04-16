@@ -1,0 +1,36 @@
+\clearpage
+
+\addcontentsline{toc}{chapter}{Abstract}
+\begin{center}
+	\textbf{\large Abstract}
+\end{center}
+
+Named Entity Recognition (NER) in new or specialized domains often requires manually defining entity types and annotating data, 
+a process that is costly and demands domain expertise. This limitation motivates \textbf{open-world NER}, 
+where the goal is not only to detect entity mentions from unlabeled text but also to \textbf{discover and name latent entity types} automatically. 
+In this thesis, we study unsupervised open-world NER under domain shift, where entity types are not predefined and 
+performance depends on both high-recall mention detection and discriminative entity representations for clustering. 
+Building on the OWNER framework, we propose three enhancements. 
+First, we replace OWNER’s mention detection with a multi-view divide-and-transfer framework (2025): 
+a shared text encoder feeds three complementary decoding heads—BIO tagging, start/end boundary tagging, 
+and tie/break span linkage—which are ensembled and filtered to produce robust, high-recall entity spans. 
+Second, for entity typing, we introduce soft-prompt entity encoding by prepending trainable virtual tokens to a BERT-style encoder and 
+representing each mention via the contextualized hidden state at the prompt’s [MASK] position, improving task conditioning for open-world clustering. 
+Third, we propose a cluster naming framework to generate human-readable entity type names for a given corpus: 
+we select diverse cluster exemplars via maximal marginal relevance (MMR) and infer concise category names 
+using either masked language modeling (MLM) consensus or a local LLM (Ollama),
+and evaluate naming quality with BERTScore. 
+Together, these components form an end-to-end, 
+more robust and interpretable unsupervised open-world NER system that not only clusters entities but also produces 
+readable type inventories for new corpora.
+
+\vspace*{1cm}
+
+\noindent\textbf{Keywords:} Open-world Named Entity Recognition; Unsupervised NER; Domain Shift; Mention Detection; Multi-view Decoding; Entity Typing; Soft Prompting; Representation Learning; Clustering; Cluster Naming; Masked Language Modeling; Local LLM
+
+\begin{comment}
+
+
+\end{comment}
+
+
