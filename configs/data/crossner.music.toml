@@ -1,0 +1,5 @@
+data_type = "crossner"
+train_path = "./data/.raw/crossner/music/train.txt"
+dev_path = "./data/.raw/crossner/music/dev.txt"
+test_path = "./data/.raw/crossner/music/test.txt"
+output_folder = "/home/smallp/code/OWNER/data/crossner/music"

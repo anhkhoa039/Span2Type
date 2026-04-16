@@ -1,0 +1,48 @@
+seed = 100
+model = "ner"
+save_state = "save_finetuned"
+save_path = "checkpoints/owner/pile_ner/sof_prompt_model"
+
+[data]
+train_dataset_path = "data/pile-ner/train.json"
+train_dataset_name = "pile-ner"
+test_dataset_path = "data/crossner/ai/test.json"
+test_dataset_v2_path = "data/crossner/ai/ai_test_converted_pile.json"
+test_dataset_name = "crossner-ai"
+
+[mention_detection]
+plm_name = "microsoft/deberta-v3-base"
+max_len = 256
+batch_size = 32
+num_epochs = 4
+learning_rate = 2e-5
+
+[entity_typing]
+template = "{sentence} {entity} is a [MASK]."
+plm_name = "bert-base-uncased"
+max_len = 256
+batch_size = 64
+num_epochs = 4
+learning_rate = 1e-4
+k_min = 2
+k_max = 30
+k_step = 2
+
+generate_cluster_names = true
+mlm_plm_name = "bert-base-uncased"
+cluster_name_backend = "ollama"
+ollama_model_name = "llama3"
+cluster_name_max_words = 3
+
+cluster_name_prompt_templates = [
+  "{entity} is a [MASK].",
+  "The entity type of {entity} is [MASK].",
+  "In this sentence, {entity} refers to a [MASK]. Sentence: {sentence}"
+]
+cluster_name_num_exemplars = 5
+cluster_name_mmr_lambda = 0.7
+
+use_soft_prompt = true
+train_plm = true
+num_soft_tokens = 5
+dropout = 0.1

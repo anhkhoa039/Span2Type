@@ -1,0 +1,5 @@
+data_type = "crossner"
+train_path = "./data/.raw/crossner/politics/train.txt"
+dev_path = "./data/.raw/crossner/politics/dev.txt"
+test_path = "./data/.raw/crossner/politics/test.txt"
+output_folder = "/home/smallp/code/OWNER/data/crossner/politics"
