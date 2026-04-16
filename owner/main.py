@@ -10,6 +10,7 @@ import torch
 from owner.utils.mlflow import log_config, absolutify
 from owner.training.mention_detection import MentionDetectionTrainer
 from owner.training.entity_typing import EntityTypingTrainer
+from owner.training.entity_typing_soft_prompt import SoftPromptEntityTypingTrainer
 from owner.training.base import BaseTrainer
 from owner.training.ner import NerTrainer
 
@@ -35,7 +36,11 @@ def main(config: dict):
         case 'mention_detection':
             model = MentionDetectionTrainer(config)
         case 'entity_typing':
-            model = EntityTypingTrainer(config)
+            et_config = config.get('entity_typing', {})
+            if et_config.get('use_soft_prompt', False):
+                model = SoftPromptEntityTypingTrainer(config)
+            else:
+                model = EntityTypingTrainer(config)
         case 'ner':
             model = NerTrainer(config)
         case _:

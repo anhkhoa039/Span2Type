@@ -3,12 +3,14 @@
 import logging
 from typing import List
 from ..data.model import MiniDocument
+from ..data.serialization import from_owner
 from ..evaluation.entity_typing import evaluate_entity_typing
 from ..evaluation.base import convert_document_to_entities, \
     merge_dataset_with_predictions
 from .base import BaseTrainer
 from .mention_detection import MentionDetectionTrainer
 from .entity_typing import EntityTypingTrainer
+from .entity_typing_soft_prompt import SoftPromptEntityTypingTrainer
 
 logger = logging.getLogger('mlflow')
 
@@ -20,7 +22,12 @@ class NerTrainer(BaseTrainer):
     def __init__(self, config: dict):
         super().__init__(config)
         self.mention_detection = MentionDetectionTrainer(config)
-        self.entity_typing = EntityTypingTrainer(config)
+        et_config = config.get('entity_typing', {})
+        use_soft_prompt = et_config.get('use_soft_prompt', False)
+        self.entity_typing = (
+            SoftPromptEntityTypingTrainer(config)
+            if use_soft_prompt else EntityTypingTrainer(config)
+        )
 
     def load_data(self, training: bool = True):
         self.mention_detection.load_data(training)
@@ -38,6 +45,7 @@ class NerTrainer(BaseTrainer):
 
         # Ground truth
         test_dataset = self.mention_detection.test_dataset.dataset
+        test_dataset_v2 = self.mention_detection.test_dataset_v2.dataset
         truth: List[MiniDocument] = []
         for document in test_dataset.documents:
             truth.append(convert_document_to_entities(document))
@@ -45,7 +53,7 @@ class NerTrainer(BaseTrainer):
         # Predict entities
         pred_entities = self.mention_detection.predict_dataset(test_dataset)
         pred_entities_dataset = merge_dataset_with_predictions(
-            test_dataset, pred_entities)
+            test_dataset, test_dataset_v2.documents)
 
         # Predict entity types
         pred_entities = self.entity_typing.predict_dataset(

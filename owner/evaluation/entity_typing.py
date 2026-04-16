@@ -1,6 +1,6 @@
 """Scorer for entity typing (and NER) task
 """
-from typing import List, Optional, Literal
+from typing import Any, Dict, List, Optional, Literal
 import json
 import mlflow
 import torch
@@ -15,6 +15,10 @@ from scipy.sparse.csgraph import reverse_cuthill_mckee
 from ..data.model import MiniDataset, MiniDocument, Metadata
 from ..data.serialization import serialize_mini_owner_dataset
 
+try:
+    from bert_score import score as bert_score
+except ImportError:  # pragma: no cover - optional dependency
+    bert_score = None
 
 def clustering_confusion_matrix(true_entities: np.ndarray, pred_entities: np.ndarray,
                                 true_entity_types: List[str | int],
@@ -103,7 +107,8 @@ def evaluate_entity_typing(true_entities: List[MiniDocument], pred_entities: Lis
                            true_entity_types: Optional[List[str | int]] = None,
                            pred_entity_types: Optional[List[str | int]] = None,
                            context: str = "",
-                           step: Optional[int] = None, prefix: str = 'et'):
+                           step: Optional[int] = None, prefix: str = 'et',
+                           pred_cluster_name_map: Optional[Dict[int | str, Any]] = None):
     """Scorer for entity typing
 
     Args:
@@ -120,6 +125,7 @@ def evaluate_entity_typing(true_entities: List[MiniDocument], pred_entities: Lis
     """
     cm_context = f'{context}{f"_{step}" if step is not None else ""}'
 
+    # Get true entity types
     if true_entity_types is None:
         true_entity_types = set()
         for document in true_entities:
@@ -128,6 +134,7 @@ def evaluate_entity_typing(true_entities: List[MiniDocument], pred_entities: Lis
     true_entity_types = sorted(true_entity_types)
     true_entity_type_to_id = {t: i for i, t in enumerate(true_entity_types)}
 
+    # Get predicted entity types
     if pred_entity_types is None:
         pred_entity_types = set()
         for document in pred_entities:
@@ -198,6 +205,69 @@ def evaluate_entity_typing(true_entities: List[MiniDocument], pred_entities: Lis
     mlflow.log_metrics({
         f'{prefix}_{context}_ami': ami,
     }, step=step)
+    # Bert score
+    # Optional semantic evaluation for generated cluster names.
+    if pred_cluster_name_map and bert_score is not None:
+        matched = (y_true_internal != -1) & (y_pred_internal != -1)
+        y_true_matched = y_true_internal[matched].cpu().numpy()
+        y_pred_matched = y_pred_internal[matched].cpu().numpy()
+        if y_true_matched.size > 0 and y_pred_matched.size > 0:
+            cm_counts = np.zeros(
+                (len(true_entity_types), len(pred_entity_types)), dtype=np.int64
+            )
+            for true_idx, pred_idx in zip(y_true_matched.tolist(), y_pred_matched.tolist()):
+                if 0 <= true_idx < cm_counts.shape[0] and 0 <= pred_idx < cm_counts.shape[1]:
+                    cm_counts[true_idx, pred_idx] += 1
+            # Build per-cluster best-match pairs (pred cluster -> dominant true type).
+            candidates: List[str] = []
+            references: List[str] = []
+            alignments: List[Dict[str, Any]] = []
+            for pred_idx, pred_type in enumerate(pred_entity_types):
+                if pred_idx >= cm_counts.shape[1]:
+                    continue
+                col = cm_counts[:, pred_idx]
+                if int(col.sum()) == 0:
+                    continue
+                true_idx = int(np.argmax(col))
+                raw_name = pred_cluster_name_map.get(
+                    pred_type, pred_cluster_name_map.get(str(pred_type), str(pred_type))
+                )
+                if isinstance(raw_name, dict):
+                    pred_name = str(raw_name.get("name", pred_type))
+                else:
+                    pred_name = str(raw_name)
+                true_name = str(true_entity_types[true_idx])
+                candidates.append(pred_name)
+                references.append(true_name)
+                alignments.append({
+                    "pred_cluster": str(pred_type),
+                    "pred_name": pred_name,
+                    "aligned_true_type": true_name,
+                    "support": int(col[true_idx]),
+                })
+
+            if candidates:
+                _, _, f1 = bert_score(candidates, references, lang="en", verbose=False)
+                mean_f1 = float(f1.mean().item())
+                mlflow.log_metrics({
+                    f'{prefix}_{context}_cluster_name_bertscore_f1': mean_f1,
+                }, step=step)
+                for i, score_val in enumerate(f1.tolist()):
+                    alignments[i]["bertscore_f1"] = float(score_val)
+                bertscore_path = (
+                    f'{prefix}_{cm_context}_cluster-name-bertscore.json'
+                )
+                with open(bertscore_path, 'w', encoding='utf-8') as file:
+                    json.dump(
+                        {
+                            "mean_f1": mean_f1,
+                            "pairs": alignments,
+                        },
+                        file,
+                        ensure_ascii=True,
+                        indent=2,
+                    )
+                mlflow.log_artifact(bertscore_path)
 
     # Confusion matrix
     cmatrix, cmatrix_yticks, cmatrix_xticks = clustering_confusion_matrix(

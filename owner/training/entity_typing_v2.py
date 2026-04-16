@@ -2,7 +2,6 @@
 """
 from typing import cast, Dict, List
 import logging
-import json
 import mlflow
 from tqdm.auto import tqdm
 import torch
@@ -14,11 +13,8 @@ from matplotlib import pyplot as plt
 from ..utils.pytorch import get_num_workers
 from ..evaluation.base import convert_document_to_entities
 from ..evaluation.entity_typing import evaluate_entity_typing
-from ..evaluation.cluster_naming import (
-    generate_cluster_name_map_with_mlm,
-    generate_cluster_name_map_with_ollama,
-)
 from ..models.entity_typing import EntityEncodingModel, AutoKmeans
+from ..models.spherical_kmeans import AutoSphericalKMeans
 from ..data.serialization import from_owner
 from ..data.model import Dataset, MiniDocument, Entity
 from ..data.datasets.entity_typing import EntityTypingDataset
@@ -46,7 +42,19 @@ def _triplet_valid_anchor_fraction(entity_types: torch.Tensor) -> float:
 
 
 class BatchTripletMarginLoss(nn.Module):
-    """Triplet margin loss with batch triplet extraction
+    """Triplet margin loss with **batch hard** positive / negative mining.
+
+    For each anchor in the batch (when at least one same-type and one
+    different-type entity exist):
+
+    - **Hard positive**: same-type entity **furthest** from the anchor (hardest
+      to pull together).
+    - **Hard negative**: different-type entity **closest** to the anchor
+      (most confusing wrong class).
+
+    Loss per anchor: ``max(0, d(a,p*) - d(a,n*) + margin)``, then mean over
+    anchors with valid pairs. This avoids diluting the signal with easy
+    negatives whose hinge is already zero.
     """
 
     def __init__(self, margin: float = 1.0):
@@ -58,28 +66,46 @@ class BatchTripletMarginLoss(nn.Module):
         self._margin = margin
 
     def forward(self, entity_types: torch.Tensor, embeddings: torch.Tensor) -> torch.Tensor:
-        """Compute triplet margin loss between all valid triplets in batch
+        """Batch hard triplet margin loss (one mined triplet per anchor when possible).
+
         Args:
             entity_types (torch.Tensor): entity types. Shape [batch]
-            embeddings (torch.Tensor): entity embeddings. Shape [batch, 768]
+            embeddings (torch.Tensor): entity embeddings. Shape [batch, dim]
+
         Returns:
-            torch.Tensor: loss
+            torch.Tensor: scalar loss (0 if no anchor has both a positive and a negative)
         """
-        type_coherence = (entity_types.unsqueeze(dim=1) -
-                          entity_types.unsqueeze(dim=0)) == 0
-        valid_triplets = (type_coherence.unsqueeze(dim=2) * ~
-                          type_coherence.unsqueeze(dim=1)).detach()
+        batch_size = entity_types.shape[0]
+        device = entity_types.device
+        idx = torch.arange(batch_size, device=device)
 
         distances = torch.cdist(embeddings, embeddings, p=2)
-        triplet_distances = (distances.unsqueeze(
-            dim=2) - distances.unsqueeze(dim=1)) * valid_triplets
 
-        loss = torch.clamp(triplet_distances + self._margin, 0.).sum()
-        num_valid_triplets = valid_triplets.sum()
-        if num_valid_triplets.item() == 0:
-            # Keep graph connected while avoiding NaN from division by zero.
+        per_anchor_losses: List[torch.Tensor] = []
+        for i in range(batch_size):
+            same_type = (entity_types == entity_types[i]) & (idx != i)
+            diff_type = entity_types != entity_types[i]
+            if not same_type.any() or not diff_type.any():
+                continue
+
+            d_row = distances[i]
+            pos_idx = torch.where(same_type)[0]
+            # Hard positive: furthest same-type entity (max distance)
+            j_hard = pos_idx[d_row[pos_idx].argmax()]
+            neg_idx = torch.where(diff_type)[0]
+            # Hard negative: closest different-type entity (min distance)
+            k_hard = neg_idx[d_row[neg_idx].argmin()]
+
+            d_pos = distances[i, j_hard]
+            d_neg = distances[i, k_hard]
+            per_anchor_losses.append(
+                torch.clamp(d_pos - d_neg + self._margin, min=0.0))
+
+        if not per_anchor_losses:
+            # Keep graph connected to embeddings when batch cannot form triplets
             return embeddings.sum() * 0.0
-        return loss / num_valid_triplets
+
+        return torch.stack(per_anchor_losses).mean()
 
 
 class EntityTypingTrainer(BaseTrainer):
@@ -174,13 +200,6 @@ class EntityTypingTrainer(BaseTrainer):
 
             self.optimizer.zero_grad()
             loss = self.loss_fn(entity_type_labels, mask_embeddings)
-            if not torch.isfinite(loss):
-                logger.warning(
-                    "Skipping step %s due to non-finite loss: %s",
-                    current_step,
-                    float(loss.detach().cpu()),
-                )
-                continue
             self.accelerator.backward(loss)
             self.optimizer.step()
             self.scheduler.step()
@@ -214,15 +233,11 @@ class EntityTypingTrainer(BaseTrainer):
         entity_embeddings = []
         entity_type_labels = []
         entity_metadata = []
-        sentence_texts = []
-        entity_texts = []
         with torch.no_grad():
             for batch in dataloader:
                 input_ids = batch['input_ids']
                 attention_mask = batch['attention_mask']
                 mask_index = batch['mask_index']
-                curr_sentence_texts = batch.get('sentence_text', [])
-                curr_entity_texts = batch.get('entity_text', [])
                 curr_entity_type_labels = batch['entity_type_label']
                 documents_ids = batch['document_idx']
                 sentence_ids = batch['sentence_idx']
@@ -234,10 +249,6 @@ class EntityTypingTrainer(BaseTrainer):
                 entity_embeddings.append(curr_entity_embeddings.detach().cpu())
                 entity_type_labels.append(
                     curr_entity_type_labels.detach().cpu())
-                if curr_sentence_texts:
-                    sentence_texts.extend(curr_sentence_texts)
-                if curr_entity_texts:
-                    entity_texts.extend(curr_entity_texts)
 
                 for i, document_idx in enumerate(documents_ids):
                     document_idx = document_idx.item()
@@ -254,30 +265,6 @@ class EntityTypingTrainer(BaseTrainer):
             # Predict clustering
             entity_embeddings = torch.cat(entity_embeddings, dim=0)
             entity_type_labels = torch.cat(entity_type_labels, dim=0)
-            finite_rows = torch.isfinite(entity_embeddings).all(dim=1)
-            if not finite_rows.all():
-                num_bad_rows = int((~finite_rows).sum().item())
-                logger.warning(
-                    "Dropping %s non-finite entity embeddings before clustering.",
-                    num_bad_rows,
-                )
-                entity_embeddings = entity_embeddings[finite_rows]
-                entity_type_labels = entity_type_labels[finite_rows]
-                entity_metadata = [
-                    meta for meta, keep in zip(entity_metadata, finite_rows.tolist()) if keep
-                ]
-                if sentence_texts:
-                    sentence_texts = [
-                        s for s, keep in zip(sentence_texts, finite_rows.tolist()) if keep
-                    ]
-                if entity_texts:
-                    entity_texts = [
-                        e for e, keep in zip(entity_texts, finite_rows.tolist()) if keep
-                    ]
-            if entity_embeddings.shape[0] == 0:
-                raise ValueError(
-                    "All entity embeddings are non-finite; cannot run clustering."
-                )
 
             if fast:
                 clustering_model = KMeans(
@@ -294,60 +281,6 @@ class EntityTypingTrainer(BaseTrainer):
 
             y_pred_clusters = clustering_model.predict(
                 entity_embeddings).tolist()
-            et_config = self.config['entity_typing']
-            cluster_name_map = None
-            # ======== generate cluster names ========
-            if et_config.get('generate_cluster_names', False) and sentence_texts and entity_texts:
-                # Support both list ("mlm", "ollama", or both) and legacy single string.
-                raw_backends = et_config.get(
-                    'cluster_name_backends',
-                    et_config.get('cluster_name_backend', 'mlm'),
-                )
-                backends = [raw_backends] if isinstance(raw_backends, str) else list(raw_backends)
-
-                all_name_maps: dict = {}
-                for backend in backends:
-                    if backend == 'ollama':
-                        backend_map = generate_cluster_name_map_with_ollama(
-                            entity_embeddings=entity_embeddings,
-                            cluster_ids=y_pred_clusters,
-                            sentence_texts=sentence_texts,
-                            entity_texts=entity_texts,
-                            model_name=et_config.get('ollama_model_name', 'llama3'),
-                            n_samples=et_config.get('cluster_name_n_samples', 16),
-                            use_mmr=et_config.get('cluster_name_use_mmr', False),
-                            mmr_lambda=et_config.get('cluster_name_mmr_lambda', 0.7),
-                            seed=et_config.get('cluster_name_seed', None),
-                            max_words=et_config.get('cluster_name_max_words', 3),
-                        )
-                    else:
-                        backend_map = generate_cluster_name_map_with_mlm(
-                            entity_embeddings=entity_embeddings,
-                            cluster_ids=y_pred_clusters,
-                            sentence_texts=sentence_texts,
-                            entity_texts=entity_texts,
-                            plm_name=et_config.get('mlm_plm_name', et_config['plm_name']),
-                            num_exemplars=et_config.get('cluster_name_num_exemplars', 16),
-                            use_mmr=et_config.get('cluster_name_use_mmr', True),
-                            mmr_lambda=et_config.get('cluster_name_mmr_lambda', 0.7),
-                            naming_template=et_config.get(
-                                'cluster_name_prompt_template',
-                                "{sentence} {entity} is a [MASK].",
-                            ),
-                            seed=et_config.get('cluster_name_seed', None),
-                        )
-                    all_name_maps[backend] = backend_map
-                    cluster_name_path = (
-                        f'{prefix}_{context}{f"_{step}" if step is not None else ""}'
-                        f'_cluster-names-{backend}.json'
-                    )
-                    with open(cluster_name_path, 'w', encoding='utf-8') as file:
-                        json.dump(backend_map, file, ensure_ascii=True, indent=2)
-                    mlflow.log_artifact(cluster_name_path)
-
-                # Prefer mlm for BertScore evaluation; fall back to first backend run.
-                cluster_name_map = all_name_maps.get('mlm', next(iter(all_name_maps.values())))
-            # ======== end generate cluster names ========
 
             for metadata, cluster in zip(entity_metadata, y_pred_clusters):
                 document_idx = metadata['document_idx']
@@ -376,15 +309,7 @@ class EntityTypingTrainer(BaseTrainer):
                 y_pred), f'Not the same number of documents {len(y_true)} != {len(y_pred)}'
 
             evaluate_entity_typing(
-                y_true,
-                y_pred,
-                dataset.metadata.entity_types,
-                None,
-                context,
-                step,
-                prefix,
-                pred_cluster_name_map=cluster_name_map,
-            )
+                y_true, y_pred, dataset.metadata.entity_types, None, context, step, prefix)
 
     def evaluate(self):
         logger.info("Evaluating Entity Typing")
@@ -488,5 +413,3 @@ class EntityTypingTrainer(BaseTrainer):
     def load_model(self, folder: str):
         self.model.load_state_dict(torch.load(f'{folder}/entity_typing.pt'))
         self.model.eval()
-
-

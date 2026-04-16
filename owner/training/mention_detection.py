@@ -35,6 +35,7 @@ class MentionDetectionTrainer(BaseTrainer):
         self.loss_fn: nn.CrossEntropyLoss = None
         self.train_dataset: MentionDetectionDataset = None
         self.test_dataset: MentionDetectionDataset = None
+        self.test_dataset_v2: MentionDetectionDataset = None
 
     def load_data(self, training: bool = True):
         data_config = self.config['data']
@@ -55,8 +56,14 @@ class MentionDetectionTrainer(BaseTrainer):
             data_config['test_dataset_path'],
             data_config['test_dataset_name']
         )
+        test_dataset_v2 = from_owner(
+            data_config['test_dataset_v2_path'],
+            data_config['test_dataset_name']
+        )
         mlflow.log_input(test_dataset, context='md_test')
         self.test_dataset = MentionDetectionDataset(
+            test_dataset.dataset, tokenizer, max_len)
+        self.test_dataset_v2 = MentionDetectionDataset(
             test_dataset.dataset, tokenizer, max_len)
 
     def train(self):

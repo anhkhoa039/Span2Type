@@ -91,6 +91,9 @@ class EntityTypingDataset(torch.utils.data.Dataset):
             'input_ids': input_ids,
             'attention_mask': attention_mask,
             'mask_index': mask_index,
+            'prompt': prompt,
+            'sentence_text': row['sentence_text'],
+            'entity_text': row['entity_text'],
             'document_idx': row['document_idx'],
             'sentence_idx': row['sentence_idx'],
             'start_word_idx': row['start_word_idx'],
@@ -177,6 +180,10 @@ class EntityTypingDataset(torch.utils.data.Dataset):
                 sentence_idx = entity.sentence_idx
 
                 try:
+                    sentence_text = ' '.join(sentences[sentence_idx])
+                    entity_text = ' '.join(
+                        sentences[sentence_idx][entity.start_word_idx:entity.end_word_idx]
+                    )
                     prompt = self.get_prompt(
                         sentences[sentence_idx], entity)
                     rows.append({
@@ -185,7 +192,9 @@ class EntityTypingDataset(torch.utils.data.Dataset):
                         'sentence_idx': sentence_idx,
                         'start_word_idx': entity.start_word_idx,
                         'end_word_idx': entity.end_word_idx,
-                        'prompt': prompt
+                        'prompt': prompt,
+                        'sentence_text': sentence_text,
+                        'entity_text': entity_text,
                     })
                 except:  # No viable prompt
                     pass
