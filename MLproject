@@ -6,3 +6,7 @@ entry_points:
     parameters:
       config_file: path
     command: 'python3 -m owner.main --config-file="{config_file}"'
+  entity_typing_soft_prompt:
+    parameters:
+      config_file: path
+    command: 'python3 -m owner.train_soft_prompt_entity_typing --config-file="{config_file}"'
