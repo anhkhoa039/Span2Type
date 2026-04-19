@@ -1,7 +1,7 @@
 seed = 100
 model = "ner"
-save_state = "load_finetuned"
-save_path = "checkpoints/owner/new_model"
+save_state = "save_finetuned"
+save_path = "checkpoints/owner/new_model_2stage"
 
 [data]
 train_dataset_path = "data/conll2003/train.json"
@@ -22,7 +22,7 @@ template = "{sentence} {entity} is a [MASK]."
 plm_name = "bert-base-uncased"
 max_len = 256
 batch_size = 64
-num_epochs = 4
+num_epochs = 30
 learning_rate = 1e-4
 k_min = 2
 k_max = 30
@@ -44,7 +44,17 @@ cluster_name_num_exemplars = 16   # for mlm backend (MMR or random)
 cluster_name_n_samples = 16       # for ollama backend (paper uses n=16)
 cluster_name_seed = 100
 
-use_soft_prompt = false
-train_plm = true
+use_soft_prompt = true
+train_plm = false           # PLM starts frozen; Stage 2 unfreezes it dynamically
+
+# ── Soft prompt architecture ─────────────────────────────────────────────────
 num_soft_tokens = 5
 dropout = 0.1
+
+# ── Two-stage prompt-initialized fine-tuning ─────────────────────────────────
+# Stage 1 (epochs 1–9):  soft prompt only, high LR
+# Stage 2 (epoch 10+):   PLM + soft prompt, low LR to prevent catastrophic forgetting
+unfreeze_epoch = 10
+soft_prompt_lr = 3e-3
+stage2_plm_lr = 1e-5
+stage2_prompt_lr = 1e-5
