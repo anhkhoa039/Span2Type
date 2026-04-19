@@ -396,9 +396,7 @@ The large disparity between learning rates is essential: a high PLM learning rat
 
 Two implementation details are critical for correctness. First, the PLM parameters are added to the existing optimizer via \texttt{add\_param\_group()} rather than reinitializing the full optimizer. This preserves the first- and second-moment estimates ($m_t$, $v_t$) accumulated for $\mathbf{P}$ during Stage~1 — meaningful gradient statistics for the already-trained soft tokens — while the newly added PLM parameters receive fresh zero-initialized moments, which is appropriate since they have not yet been updated. Second, the learning rate scheduler is reset at the $E_{\text{unfreeze}}$ boundary so that $\eta_{\text{PLM}}^{(2)}$ decays from its full value rather than inheriting a mid-schedule multiplier left over from Stage~1.
 
-\section{Stage 3: BIC-Guided Automatic Cluster Assignment}
-
-\subsection{AutoKmeans}
+\subsection{BIC-Guided Cluster Assignment}
 
 After the encoder is trained, all entity spans in the target domain are encoded into embeddings $\{\mathbf{e}_s\}$. Since the number of entity types in the target domain is unknown, the system must determine $k$ automatically. This is achieved via \textbf{AutoKmeans}, which searches over a range $[k_{\min}, k_{\max}]$ with step $k_{\text{step}}$ and selects the $k^*$ that minimizes the Bayesian Information Criterion (BIC).
 
@@ -415,7 +413,7 @@ The first term measures fit quality: it decreases as $k$ grows and the clusterin
 GridSearchCV with $k$-means++ initialization and 10 random restarts is used for each candidate $k$. The best model (at $k^*$) is then used to assign cluster labels $c_s \in \{1, \ldots, k^*\}$ to every entity span.
 
 
-\section{Stage 4: Automatic Cluster Naming}
+\section{Stage 3: Automatic Cluster Naming}
 
 \subsection{MMR-Based Exemplar Selection}
 
@@ -426,7 +424,7 @@ Let $\boldsymbol{\mu}_c = \frac{1}{|\mathcal{E}_c|}\sum_{s \in \mathcal{E}_c} \m
     \text{MMR}(s) = \lambda \cdot \cos(\mathbf{e}_s, \boldsymbol{\mu}_c) - (1-\lambda) \cdot \max_{r \in \mathcal{R}} \cos(\mathbf{e}_s, \mathbf{e}_r),
     \label{eq:mmr}
 \end{equation}
-where $\lambda \in [0, 1]$ controls the trade-off between centroid relevance (first term) and diversity relative to already-selected exemplars (second term). A value of $\lambda = 0.7$ is used by default, slightly favouring relevance over diversity. The process repeats until $|\mathcal{R}| = K_e$ (default $K_e = 5$). This ensures that the selected exemplars cover the semantic spread of the cluster rather than all clustering near the centroid.
+where $\lambda \in [0, 1]$ controls the trade-off between centroid relevance (first term) and diversity relative to already-selected exemplars (second term). A value of $\lambda = 0.7$ is used by default, slightly favouring relevance over diversity. The process repeats until $|\mathcal{R}| = K_e$ (default $K_e = 16$). This ensures that the selected exemplars cover the semantic spread of the cluster rather than all clustering near the centroid.
 
 \subsection{MLM-Based Naming}
 
@@ -524,7 +522,7 @@ The entity encoding model uses \textbf{BERT-base-uncased} with the template \emp
 AutoKmeans searches $k \in [2, 30]$ with step 2, using $k$-means++ initialization and 10 random restarts per $k$ value.
 
 \paragraph{Cluster Naming.}
-MMR exemplar selection uses $K_e = 5$ exemplars with $\lambda = 0.7$. The MLM backend uses BERT-base-uncased. The LLM backend uses Llama-3 served via Ollama.
+MMR exemplar selection uses $K_e = 16$ exemplars with $\lambda = 0.7$. The MLM backend uses BERT-base-uncased. The LLM backend uses Llama-3 served via Ollama.
 
 \section{Evaluation Metrics}
 
@@ -551,24 +549,41 @@ Figure~\ref{fig:bertscore_bar} illustrates the score range: exact copies score 1
 
 \FloatBarrier
 
-\section{Baselines and Ablations}
+\section{Baselines}
 
 We compare against the following systems:
 
 \paragraph{OWNER (baseline).}
 The original OWNER pipeline~\cite{wang-etal-2023-crossner} uses a DeBERTa-v3-base BIO mention detector trained on the source domain, BERT fill-in-the-blank entity embeddings, BIC-guided $k$-means clustering, and single-template MLM naming without exemplar selection.
 
-\paragraph{Span2Type-BIO.}
-Replaces the DTrans multi-view detector with a single BIO head (same BERT backbone), keeping all other components identical to Span2Type-Full. This ablation isolates the contribution of multi-view detection.
+\paragraph{Span2Type-CentroidNaming (MLM).}
+Uses the centroid-nearest single exemplar for cluster naming instead of MMR-based diverse selection, with the MLM backend. This variant isolates the contribution of exemplar diversity in the naming stage.
 
-\paragraph{Span2Type-SoftPrompt.}
-Replaces the full BERT fine-tuning in the entity typing stage with the soft prompt variant (frozen PLM, $N_p = 5$ trainable tokens). All other components are identical to Span2Type-Full.
+\paragraph{Span2Type-MLM (MMR).}
+Uses MMR-based exemplar selection with the MLM (BERT) naming backend.
 
-\paragraph{Span2Type-CentroidNaming.}
-Uses the centroid-nearest single exemplar for cluster naming instead of MMR-based diverse selection. This ablation isolates the contribution of exemplar diversity.
+\paragraph{Span2Type-LLM (MMR).}
+The proposed cluster naming configuration: MMR-based exemplar selection with the LLM (Llama-3 via Ollama) naming backend.
 
-\paragraph{Span2Type-Full.}
-The complete system: DTrans multi-view entity detection + full BERT entity typing + BIC $k$-means + MMR-based MLM naming.
+\paragraph{Span2Type (CoNLL) / Span2Type (Pile-NER).}
+The complete pipeline: DTrans multi-view entity detection + two-stage soft-prompt entity typing + BIC $k$-means + MMR-based LLM naming, trained on CoNLL-2003 or Pile-NER respectively.
+
+
+\section{Main Results}
+
+End-to-end NER AMI on the five CrossNER target domains is reported in Table~\ref{tab:ner_comparison}, comparing Span2Type against unsupervised and open-world NER baselines. All methods use CoNLL-2003 as the source unless stated otherwise.
+
+\FloatBarrier
+
+\input{tables/main_result_tab}
+
+\FloatBarrier
+
+Span2Type (CoNLL) achieves the best average AMI of 61.4, outperforming the next best system OWNER (CoNLL) by 12.0 points (49.4 $\to$ 61.4). The improvements are consistent across all five domains: AI (+13.3), Literature (+10.3), Music (+9.9), Politics (+12.6), and Science (+13.7). Compared to OWNER trained on Pile-NER (48.2), Span2Type (CoNLL) still gains 13.2 points on average.
+
+Among LLM-based unsupervised baselines, UniNER with GPT-4o mini (47.4) is the strongest, but still falls 14.0 points below Span2Type (CoNLL). The ChatIE-based approaches lag considerably at 22.8--35.0, demonstrating that open-world NER requires more than zero-shot prompting.
+
+Span2Type (Pile-NER) achieves 55.42 AMI on average, which is lower than the CoNLL-source variant (61.4) but still substantially above all baselines. This suggests that the broader vocabulary coverage of Pile-NER does not consistently benefit the CrossNER domains, which are closer in style to the structured CoNLL-2003 source.
 
 
 \section{Entity Detection Results}
@@ -584,52 +599,14 @@ We compare span detection F1 across five CrossNER target domains for different m
 The DTrans multi-view model (BIO-SE-TB) achieves the highest average F1 of 82.35, outperforming the OWNER BIO baseline (75.68) by 6.67 points on average. The gains are consistent across all five domains, with the most notable improvement in AI (+20.85 points over OWNER BIO). The competing span detection methods PURE (35.76) and SpanProto (61.00) lag significantly behind, while WL-Coref (65.62) performs better but still falls short of the multi-view approach. Literature is the only domain where OWNER BIO achieves the top score (83.9), narrowly surpassing BIO-SE-TB (82.68), likely because the literary domain's entity boundaries align well with the sequential BIO formulation. Overall, the results confirm that jointly training three complementary decoders yields substantially more robust span detection across domains.
 
 
-\section{Main Results}
-
-End-to-end NER F1 on the five CrossNER target domains is reported in Table~\ref{tab:ner_comparison}, comparing Span2Type against unsupervised and open-world NER baselines. All methods use CoNLL-2003 as the source unless stated otherwise.
-
-\FloatBarrier
-
-\input{tables/main_result_tab}
-
-\FloatBarrier
-
-Span2Type (CoNLL) achieves the best average F1 of 61.4, outperforming the next best system OWNER (CoNLL) by 12.0 points (49.4 $\to$ 61.4). The improvements are consistent across all five domains: AI (+13.3), Literature (+10.3), Music (+9.9), Politics (+12.6), and Science (+13.7). Compared to OWNER trained on Pile-NER (48.2), Span2Type (CoNLL) still gains 13.2 points on average.
-
-Among LLM-based unsupervised baselines, UniNER with GPT-4o mini (47.4) is the strongest, but still falls 14.0 points below Span2Type (CoNLL). The ChatIE-based approaches lag considerably at 22.8--35.0, demonstrating that open-world NER requires more than zero-shot prompting.
-
-Span2Type (Pile-NER) achieves 55.42 on average, which is lower than the CoNLL-source variant (61.4) but still substantially above all baselines. This suggests that the broader vocabulary coverage of Pile-NER does not consistently benefit the CrossNER domains, which are closer in style to the structured CoNLL-2003 source.
-
-
 \section{Cluster Naming Results}
 
 Cluster naming quality, measured by BERTScore-F1 between predicted and gold CrossNER type names, is shown in Table~\ref{tab:naming}.
-All Span2Type variants use $K_e{=}5$ exemplars per cluster; the centroid baseline selects the nearest entity, while MMR variants select a diverse representative set.
+All Span2Type variants use $n{=}16$ exemplars per cluster; the centroid baseline selects the nearest entities, while MMR variants select a diverse representative set.
 
 \FloatBarrier
 
-\begin{table}[ht]
-\centering
-\footnotesize
-\caption{Cluster naming quality (BERTScore-F1, RoBERTa-large backbone) per CrossNER domain.
-All methods use $K_e{=}5$ exemplars except OWNER which aggregates over all cluster entities.
-\textbf{Bold} = best per column.}
-\label{tab:naming}
-\begin{tabular}{l|ccccc|c}
-\toprule
-Method & AI & Lit. & Music & Pol. & Sci. & Avg. \\
-\midrule
-OWNER (single-template MLM)
-  & 0.989 & 0.974 & 0.958 & 0.964 & 0.945 & 0.966 \\
-Span2Type-CentroidNaming (MLM)
-  & 0.904 & 0.887 & 0.895 & 0.883 & 0.894 & 0.892 \\
-Span2Type-MLM (MMR)
-  & 0.900 & 0.889 & 0.911 & 0.887 & 0.893 & 0.896 \\
-\textbf{Span2Type-LLM (MMR)}
-  & \textbf{0.958} & \textbf{0.979} & 0.939 & \textbf{0.964} & \textbf{0.950} & \textbf{0.956} \\
-\bottomrule
-\end{tabular}
-\end{table}
+\input{tables/naming_tab}
 
 \FloatBarrier
 
@@ -642,8 +619,19 @@ Comparing the two MLM variants, Span2Type-MLM (MMR) outscores Span2Type-Centroid
 The improvement is consistent across domains, confirming that MMR-based diverse exemplar selection produces a more stable majority vote than centroid-nearest selection alone.
 The gain is modest because both methods share the same single-token prediction constraint; the benefit of diversity is bounded by the expressiveness of the MLM vocabulary at the \texttt{[MASK]} position.
 
-The OWNER baseline (0.966) uses all cluster entities for majority-vote naming rather than a fixed exemplar budget, giving it a statistical robustness advantage over any $K_e{=}5$ method.
-Span2Type-LLM (MMR) reaches within $0.010$ of the OWNER all-entities baseline (0.956 vs.\ 0.966) while using only $K_e{=}5$ exemplars per cluster, demonstrating that an LLM backend with diverse exemplar selection is the most effective naming strategy under a constrained inference budget.
+The OWNER baseline (0.966) uses all cluster entities for majority-vote naming rather than a fixed exemplar budget, giving it a statistical robustness advantage over any fixed-$n$ method.
+Span2Type-LLM (MMR) reaches within $0.010$ of the OWNER all-entities baseline (0.956 vs.\ 0.966) while using only $n{=}16$ exemplars per cluster, demonstrating that an LLM backend with diverse exemplar selection is the most effective naming strategy under a constrained inference budget.
+
+Table~\ref{tab:naming_examples} shows qualitative naming examples for both backends across all five CrossNER domains.
+The BERT MLM backend correctly names simple, frequent entity types (\textit{conference}, \textit{band}, \textit{protein}) but is limited to single tokens and produces over-specific predictions in some cases (\textit{physicist} for \texttt{researcher}; \textit{democrat} for \texttt{politician}; \textit{poet} for \texttt{writer}).
+A known artefact of the fill-in-the-blank template is the token \textit{vegetarian}, which appears when the entity context does not align with BERT's pretraining distribution; this affects approximately 9\% of all clusters across domains.
+The LLM backend avoids this artefact and produces richer multi-word labels (\textit{political party}, \textit{music genres}), but is not perfect: it outputs \textit{actor} for the ground-truth label \texttt{person} in Politics (a cluster dominated by performers), and generates \textit{literary work} and \textit{musician} for compound GT labels (\texttt{literarygenre}, \texttt{musicalartist}) where the tokenisation mismatch reduces BERTScore even when the semantics are correct.
+
+\FloatBarrier
+
+\input{tables/naming_examples}
+
+\FloatBarrier
 
 Figure~\ref{fig:naming_summary} provides a complementary view: the left panel shows per-domain mean BERTScore-F1 with standard deviation for Span2Type-LLM (MMR), confirming Literature as the strongest domain (0.979) and Music as the weakest (0.939).
 The right panel plots cluster purity against BERTScore-F1 across all clusters and domains; the near-zero correlation ($r{=}0.01$) indicates that naming quality is largely independent of cluster purity --- the LLM backend can assign a semantically accurate type label even for impure clusters.
@@ -661,7 +649,15 @@ The right panel plots cluster purity against BERTScore-F1 across all clusters an
 
 \section{Ablation Study}
 
-The contribution of each Span2Type component is isolated in Table~\ref{tab:ablation_study} by progressively removing or replacing one part of the full system.
+To isolate the contribution of each component, we evaluate the following ablation variants against the full system:
+
+\begin{itemize}
+    \item \textbf{Span2Type w/o Soft Prompt}: replaces the two-stage soft-prompt entity typing with standard BERT fine-tuning (no soft prompt tokens), while keeping DTrans multi-view detection and all other components.
+    \item \textbf{Span2Type w/o Ensemble MD}: replaces the DTrans multi-view detector with a single BIO head (same backbone), while keeping the soft-prompt entity typing and all other components.
+    \item \textbf{Span2Type (Full Model)}: the complete system with DTrans multi-view detection and two-stage soft-prompt entity typing.
+\end{itemize}
+
+The contribution of each component is isolated in Table~\ref{tab:ablation_study} by progressively removing or replacing one part of the full system.
 
 \FloatBarrier
 
@@ -669,11 +665,11 @@ The contribution of each Span2Type component is isolated in Table~\ref{tab:ablat
 
 \FloatBarrier
 
-The OWNER baseline (49.4 avg) serves as the starting point. Replacing the BIO-only mention detector with the DTrans multi-view ensemble while keeping all other components identical (``w/o Soft Prompt'') improves the average F1 to 58.6 (+9.2 points), demonstrating that multi-view entity detection is the single largest contributor to the overall improvement.
+The OWNER baseline (49.4 avg) serves as the starting point. Replacing the BIO-only mention detector with the DTrans multi-view ensemble while keeping all other components identical (``w/o Soft Prompt'') improves the average AMI to 58.6 (+9.2 points), demonstrating that multi-view entity detection is the single largest contributor to the overall improvement.
 
 Adding the soft prompt entity typing variant on top brings the full model to 61.4 (+2.8 over ``w/o Soft Prompt''), showing that parameter-efficient prompt tuning further refines the entity type embeddings even with the backbone frozen. Removing the ensemble mention detector while keeping soft prompt tuning (``w/o Ensemble MD'', 57.80) shows a 3.6-point drop relative to the full model, confirming that both components contribute independently.
 
-These results indicate that the three improvements are complementary: the DTrans multi-view detector provides higher-quality span candidates, the soft prompt tuning produces more type-discriminative embeddings, and together they push the full pipeline to 61.4 average F1.
+These results indicate that the three improvements are complementary: the DTrans multi-view detector provides higher-quality span candidates, the soft prompt tuning produces more type-discriminative embeddings, and together they push the full pipeline to 61.4 average AMI.
 
 
 \section{Discussion}
@@ -682,10 +678,10 @@ These results indicate that the three improvements are complementary: the DTrans
 Table~\ref{tab:mention_detection} shows that the DTrans multi-view detector (BIO-SE-TB) achieves an average F1 of 82.35 across five CrossNER domains, compared to 75.68 for the OWNER BIO-only baseline---a gain of 6.67 points. The improvement is largest in AI (+20.85) and smallest in Literature, where the BIO baseline remains competitive (83.9 vs 82.68). This suggests that the complementary SE and TB decoders are most beneficial in domains with irregular entity boundaries and diverse surface forms, while sequential BIO labeling suffices for more structured literary text.
 
 \paragraph{End-to-end NER improvement.}
-The main results in Table~\ref{tab:ner_comparison} show that Span2Type (CoNLL) achieves 61.4 average F1, a 12.0-point improvement over OWNER (49.4). This gap is substantially larger than the 6.67-point improvement at the entity detection stage alone, suggesting that the better span candidates from DTrans detection also improve downstream entity typing quality by reducing noise in the embeddings used for clustering.
+The main results in Table~\ref{tab:ner_comparison} show that Span2Type (CoNLL) achieves 61.4 average AMI, a 12.0-point improvement over OWNER (49.4). This gap is substantially larger than the 6.67-point improvement at the entity detection stage alone, suggesting that the better span candidates from DTrans detection also improve downstream entity typing quality by reducing noise in the embeddings used for clustering.
 
 \paragraph{Effect of source corpus.}
-Span2Type (Pile-NER) achieves 55.42 average F1, lower than the CoNLL-source variant (61.4). The CrossNER domains are stylistically closer to CoNLL-2003 newswire than to the heterogeneous Pile-NER distribution, so the more focused CoNLL source produces a better-calibrated detector for these benchmarks.
+Span2Type (Pile-NER) achieves 55.42 average AMI, lower than the CoNLL-source variant (61.4). The CrossNER domains are stylistically closer to CoNLL-2003 newswire than to the heterogeneous Pile-NER distribution, so the more focused CoNLL source produces a better-calibrated detector for these benchmarks.
 
 \paragraph{Soft prompt tuning and ensemble detection.}
 The ablation in Table~\ref{tab:ablation_study} confirms that both the multi-view detector (+9.2 from 49.4 to 58.6) and the soft prompt entity typing (+2.8 from 58.6 to 61.4) contribute independently. The soft prompt variant reduces trainable parameters from $\sim$110M to $\sim$3,840 while still improving over the full fine-tuning OWNER baseline, demonstrating a favorable efficiency--performance trade-off.
@@ -704,7 +700,7 @@ We introduced three improvements to the OWNER pipeline and evaluated them system
 
 \textbf{Third}, we proposed an MMR-based exemplar selection strategy for automatic cluster naming. Rather than querying a naming model with the single centroid-nearest example per cluster, we use Maximal Marginal Relevance~\cite{carbonell-goldstein-1998-use} to select $K_e = 5$ diverse, centroid-relevant exemplars before passing them to either an MLM or a locally hosted LLM. This ensures the naming model receives evidence spanning the full semantic range of the cluster, producing more specific and stable type names.
 
-On the CrossNER benchmark, Span2Type (CoNLL source) achieves an average end-to-end NER F1 of \textbf{61.4}, compared to \textbf{49.4} for the OWNER baseline—a 12.0-point improvement. Ablation experiments confirm that the multi-view detector contributes the largest share of this gain (+9.2 points), while soft prompt tuning provides a complementary additional improvement (+2.8 points).
+On the CrossNER benchmark, Span2Type (CoNLL source) achieves an average end-to-end NER AMI of \textbf{61.4}, compared to \textbf{49.4} for the OWNER baseline—a 12.0-point improvement. Ablation experiments confirm that the multi-view detector contributes the largest share of this gain (+9.2 points), while soft prompt tuning provides a complementary additional improvement (+2.8 points).
 
 \section{Limitations}
 

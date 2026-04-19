@@ -1,0 +1,9 @@
+\babel@toc {english}{}\relax 
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {3.1}{\ignorespaces Overview of the Span2Type framework. The pipeline consists of three stages: (1)~\textbf {Mention Detection} — a multi-view DeBERTa-v3 detector with BIO, Start-End, and Tie-or-Break taggers produces a union of candidate mentions; (2)~\textbf {Prompt-based Entity Encoding and Embedding Refinement} — each span is encoded via a fill-in-the-blank template with an optional soft prompt, and embeddings are refined using batch triplet contrastive learning; (3)~\textbf {Entity Clustering and Cluster Naming} — BIC-guided $k$-means groups spans into types, and a Cluster Naming module assigns human-readable labels (e.g., Person, Location, Disease).\relax }}{16}{figure.caption.4}%
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {4.1}{\ignorespaces BERTScore-F1 (RoBERTa-large) for representative prediction quality levels. Even a completely wrong label scores $\approx 0.86$ due to shared contextual embedding space, so differences above this floor reflect genuine semantic proximity.\relax }}{32}{figure.caption.7}%
+\contentsline {figure}{\numberline {4.2}{\ignorespaces Span2Type-LLM (MMR) naming quality across CrossNER domains. \textit {Left}: mean BERTScore-F1 ($\pm $ std) per domain. \textit {Right}: cluster purity vs.\ BERTScore-F1 scatter for all clusters; the near-zero Pearson $r$ shows that naming quality does not depend on cluster purity.\relax }}{40}{figure.caption.12}%
+\addvspace {10\p@ }

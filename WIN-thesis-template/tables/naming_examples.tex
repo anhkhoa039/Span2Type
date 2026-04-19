@@ -1,0 +1,42 @@
+\begin{table}[ht]
+\centering
+\footnotesize
+\caption{Qualitative cluster naming examples across CrossNER domains.
+\textit{BERT (MLM)} uses majority-vote over all cluster entities;
+\textit{LLM (MMR)} uses Span2Type with $n{=}16$ MMR-selected exemplars.
+\textsuperscript{$\dagger$} = degenerate BERT artefact (\textit{vegetarian} appears
+in $\approx$9\% of clusters across all domains).
+\textsuperscript{$\ddagger$} = compound GT label.}
+\label{tab:naming_examples}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{l l l l}
+\toprule
+\textbf{Domain} & \textbf{GT Label} & \textbf{BERT (MLM)} & \textbf{LLM (MMR)} \\
+\midrule
+\multirow{3}{*}{AI}
+  & conference        & conference              & conference \\
+  & university        & university              & university \\
+  & researcher        & physicist               & computer scientist \\
+\midrule
+\multirow{3}{*}{Literature}
+  & award             & award                   & award \\
+  & writer            & poet                    & author \\
+  & literarygenre\textsuperscript{$\ddagger$} & genre & literary work \\
+\midrule
+\multirow{3}{*}{Music}
+  & band              & band                    & band \\
+  & musicgenre\textsuperscript{$\ddagger$}    & genre & music genres \\
+  & musicalartist\textsuperscript{$\ddagger$} & \textit{vegetarian}\textsuperscript{$\dagger$} & musician \\
+\midrule
+\multirow{3}{*}{Politics}
+  & politician        & democrat                & politician \\
+  & politicalparty    & party                   & political party \\
+  & person            & \textit{vegetarian}\textsuperscript{$\dagger$} & actor \\
+\midrule
+\multirow{3}{*}{Science}
+  & protein           & protein                 & protein \\
+  & scientist         & physicist               & scientist \\
+  & astronomicalobj\textsuperscript{$\ddagger$} & planet & planet \\
+\bottomrule
+\end{tabular}
+\end{table}
