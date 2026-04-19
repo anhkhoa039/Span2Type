@@ -23,6 +23,7 @@
 \newcommand{\tabitem}{~~\llap{\textbullet}~~}
 \usepackage{longtable}
 \usepackage{booktabs}
+\usepackage{colortbl}
 \usepackage[utf8]{inputenc}
 \usepackage{etoolbox}
 \usepackage{float} % For the H specifier
@@ -205,7 +206,7 @@ This thesis makes the following specific technical contributions:
 
 NER has evolved from supervised sequence labeling with CRFs~\cite{lafferty-etal-2001-crf} and BiLSTM-CRF architectures~\cite{ma-hovy-2016-end} to transformer-based models using BERT~\cite{devlin-etal-2019-bert} and RoBERTa~\cite{liu-etal-2019-roberta}, achieving near-human performance on benchmarks such as CoNLL-2003~\cite{tjong-kim-sang-de-meulder-2003-introduction}. Cross-domain and few-shot methods~\cite{yang-katiyar-2020-simple, ma-etal-2022-label} reduce annotation cost but still require a predefined type inventory and at least a few labeled examples per type.
 
-Open-world NER removes these constraints entirely: the model receives an unannotated corpus and must discover entity types without any predefined ontology. Systems such as UniversalNER~\cite{zhou-etal-2024-universalner} and ChatIE~\cite{wei-etal-2023-chatie} use LLM prompting for open-vocabulary extraction, while clustering-based approaches embed entity mentions and group them by type. The OWNER framework~\cite{wang-etal-2023-crossner} is the direct baseline for this thesis: it trains a DeBERTa-based~\cite{he-etal-2021-deberta} BIO mention detector on a source domain, encodes entities via a fill-in-the-blank BERT template, and clusters embeddings with BIC-guided $k$-means~\cite{macqueen-1967-kmeans, schwarz-1978-bic} to assign unsupervised type labels. This thesis builds on OWNER and improves its span detection and cluster naming components.
+Open-world NER removes these constraints entirely: the model receives an unannotated corpus and must discover entity types without any predefined ontology. Systems such as UniversalNER~\cite{zhou-etal-2024-universalner} and ChatIE~\cite{wei-etal-2023-chatie} use LLM prompting for open-vocabulary extraction, while clustering-based approaches embed entity mentions and group them by type. The OWNER framework~\cite{wang-etal-2023-crossner} is the direct baseline for this thesis: it trains a DeBERTa-v3-based~\cite{he-etal-2023-debertav3} BIO mention detector on a source domain, encodes entities via a fill-in-the-blank BERT template, and clusters embeddings with BIC-guided $k$-means~\cite{macqueen-1967-kmeans, schwarz-1978-bic} to assign unsupervised type labels. This thesis builds on OWNER and improves its span detection and cluster naming components.
 
 \section{Multi-View Span Detection}
 
@@ -414,7 +415,7 @@ The first term measures fit quality: it decreases as $k$ grows and the clusterin
     k^* = \arg\min_{k \in \{k_{\min},\, k_{\min}+k_{\text{step}},\, \ldots,\, k_{\max}\}} \text{BIC}(k).
     \label{eq:k_star}
 \end{equation}
-GridSearchCV with $k$-means++ initialization and 10 random restarts is used for each candidate $k$. The best model (at $k^*$) is then used to assign cluster labels $c_s \in \{1, \ldots, k^*\}$ to every entity span.
+GridSearchCV with $k$-means++~\cite{arthur-vassilvitskii-2007-kmeanspp} initialization and 10 random restarts is used for each candidate $k$. The best model (at $k^*$) is then used to assign cluster labels $c_s \in \{1, \ldots, k^*\}$ to every entity span.
 
 
 \section{Stage 3: Automatic Cluster Naming}
@@ -523,7 +524,7 @@ The DTrans multi-view entity detector uses \textbf{BERT-base-cased}~\cite{devlin
 The entity encoding model uses \textbf{BERT-base-uncased} with the template \emph{``\{sentence\} \{entity\} is a \texttt{[MASK]}.''}\ and a batch triplet margin loss ($\gamma = 1.0$). For the standard fine-tuning variant, AdamW with learning rate $2\times10^{-5}$ is used for 30 epochs. For the soft prompt variant, two-stage prompt-initialized fine-tuning (Section~3.3) is applied over 30 epochs: Stage~1 trains only the $N_p = 5$ soft prompt tokens at $\eta = 3\times10^{-3}$ for 10 epochs with the PLM strictly frozen; Stage~2 unfreezes the PLM and fine-tunes both prompt and backbone at $1\times10^{-5}$ for the remaining 20 epochs, with the learning rate scheduler reset at the boundary. Both stages use a linear decay schedule with no warmup steps.
 
 \paragraph{Clustering.}
-AutoKmeans searches $k \in [2, 30]$ with step 2, using $k$-means++ initialization and 10 random restarts per $k$ value.
+AutoKmeans searches $k \in [2, 30]$ with step 2, using $k$-means++~\cite{arthur-vassilvitskii-2007-kmeanspp} initialization and 10 random restarts per $k$ value.
 
 \paragraph{Cluster Naming.}
 MMR exemplar selection uses $K_e = 16$ exemplars with $\lambda = 0.7$. The MLM backend uses BERT-base-uncased. The LLM backend uses Llama-3 served via Ollama.
@@ -637,6 +638,15 @@ The LLM backend avoids this artefact and produces richer multi-word labels (\tex
 
 \FloatBarrier
 
+Table~\ref{tab:naming_lit_detail} presents the complete per-cluster naming results for the Literature domain, which achieves the highest mean BERTScore-F1 of 0.979 among all five domains.
+Of the 14 clusters, 11 score $F_1 \geq 0.99$ (green), indicating near-perfect semantic alignment between the LLM-generated name and the gold CrossNER type.
+The two red-cell failures follow the failure patterns noted above: \textit{film festival} (C8, $F_1{=}0.877$) is a specificity mismatch against the broad GT label \texttt{event}, and \textit{literary work} (C13, $F_1{=}0.855$) incurs a tokenisation penalty because the GT label \texttt{literarygenre} is a compound string with no whitespace.
+The remaining yellow-cell cluster, \textit{theatre} (C3, $F_1{=}0.979$), maps to \texttt{location} rather than a dedicated theatrical-venue type, reflecting a mixed cluster rather than a naming error.
+
+\input{tables/naming_lit_detail}
+
+\FloatBarrier
+
 Figure~\ref{fig:naming_summary} provides a complementary view: the left panel shows per-domain mean BERTScore-F1 with standard deviation for Span2Type-LLM (MMR), confirming Literature as the strongest domain (0.979) and Music as the weakest (0.939).
 The right panel plots cluster purity against BERTScore-F1 across all clusters and domains; the near-zero correlation ($r{=}0.01$) indicates that naming quality is largely independent of cluster purity --- the LLM backend can assign a semantically accurate type label even for impure clusters.
 
@@ -718,7 +728,7 @@ The cluster naming quality depends on the availability and quality of the MLM or
 
 \section{Future Work}
 
-Several directions extend the work presented in this thesis. First, the soft prompt tuning approach could be extended with adapter layers or LoRA-based fine-tuning to capture more expressive adaptation with a still-limited parameter budget. Second, the MMR exemplar selection strategy could be applied not only at naming time but also during the entity typing training phase, selecting diverse in-context examples for few-shot or retrieval-augmented typing. Third, the BIC-guided clustering could be replaced with a hierarchical or density-based method that produces a type hierarchy rather than a flat partition, enabling more nuanced ontology induction. Finally, Span2Type could be evaluated on additional benchmarks beyond CrossNER, particularly in biomedical and legal domains where the need for open-world entity type discovery is most acute.
+Several directions extend the work presented in this thesis. First, the soft prompt tuning approach could be extended with adapter layers or LoRA-based fine-tuning~\cite{hu-etal-2022-lora} to capture more expressive adaptation with a still-limited parameter budget. Second, the MMR exemplar selection strategy could be applied not only at naming time but also during the entity typing training phase, selecting diverse in-context examples for few-shot or retrieval-augmented typing. Third, the BIC-guided clustering could be replaced with a hierarchical or density-based method that produces a type hierarchy rather than a flat partition, enabling more nuanced ontology induction. Finally, Span2Type could be evaluated on additional benchmarks beyond CrossNER, particularly in biomedical and legal domains where the need for open-world entity type discovery is most acute.
 
 \clearpage	
 \addcontentsline{toc}{chapter}{\textbf{Bibliography}}

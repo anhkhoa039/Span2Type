@@ -11,7 +11,7 @@ where the goal is not only to detect entity mentions from unlabeled text but als
 In this thesis, we study unsupervised open-world NER under domain shift, where entity types are not predefined and 
 performance depends on both high-recall mention detection and discriminative entity representations for clustering. 
 Building on the OWNER framework, we propose three enhancements. 
-First, we replace OWNER’s mention detection with a multi-view divide-and-transfer framework (2025): 
+First, we replace OWNER’s mention detection with a multi-view divide-and-transfer framework~\cite{zhang-etal-2024-dtrans}: 
 a shared text encoder feeds three complementary decoding heads—BIO tagging, start/end boundary tagging, 
 and tie/break span linkage—which are ensembled and filtered to produce robust, high-recall entity spans. 
 Second, for entity typing, we introduce soft-prompt entity encoding by prepending trainable virtual tokens to a BERT-style encoder and 

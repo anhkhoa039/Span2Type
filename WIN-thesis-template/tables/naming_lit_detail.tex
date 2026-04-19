@@ -1,0 +1,33 @@
+\begin{table}[ht]
+\centering
+\footnotesize
+\caption{Span2Type-LLM (MMR) per-cluster naming results --- Literature domain (14 clusters).
+GT Label is the CrossNER entity type with the highest entity count in each cluster.
+\colorbox{green!15}{green} $F_1 \geq 0.99$,
+\colorbox{yellow!25}{yellow} $0.90 \leq F_1 < 0.99$,
+\colorbox{red!15}{red} $F_1 < 0.90$.}
+\label{tab:naming_lit_detail}
+\setlength{\tabcolsep}{6pt}
+\begin{tabular}{r l l r}
+\toprule
+\textbf{C\#} & \textbf{Predicted Name} & \textbf{GT Label} & \textbf{$F_1$} \\
+\midrule
+ 0 & book          & book          & \cellcolor{green!15}1.0000 \\
+ 1 & author        & writer        & \cellcolor{green!15}0.9983 \\
+ 2 & language      & misc          & \cellcolor{green!15}0.9986 \\
+ 3 & theatre       & location      & \cellcolor{yellow!25}0.9789 \\
+ 4 & academy       & organisation  & \cellcolor{green!15}0.9982 \\
+ 5 & mythology     & book          & \cellcolor{green!15}0.9993 \\
+ 6 & novel         & book          & \cellcolor{green!15}0.9992 \\
+ 7 & novels        & book          & \cellcolor{green!15}0.9995 \\
+ 8 & film festival & event         & \cellcolor{red!15}0.8766 \\
+ 9 & country       & country       & \cellcolor{green!15}1.0000 \\
+10 & author        & writer        & \cellcolor{green!15}0.9983 \\
+11 & award         & award         & \cellcolor{green!15}1.0000 \\
+12 & novel         & book          & \cellcolor{green!15}0.9992 \\
+13 & literary work & literarygenre & \cellcolor{red!15}0.8552 \\
+\midrule
+\multicolumn{3}{l}{\textbf{Mean}} & \textbf{0.9787} \\
+\bottomrule
+\end{tabular}
+\end{table}

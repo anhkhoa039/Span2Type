@@ -21,6 +21,11 @@
 \providecommand{\BIBdecl}{\relax}
 \BIBdecl
 
+\bibitem{zhang-etal-2024-dtrans}
+X.~Zhang, B.~Yu, X.~Cong, T.~Su, Q.~Li, T.~Liu, and H.~Xu, ``Cross-domain {NER}
+  under a divide-and-transfer paradigm,'' \emph{{ACM} Transactions on
+  Information Systems}, vol.~42, no.~5, pp. 137:1--137:26, 2024.
+
 \bibitem{tjong-kim-sang-de-meulder-2003-introduction}
 E.~F. Tjong Kim~Sang and F.~De~Meulder, ``Introduction to the {C}o{NLL}-2003
   shared task: Language-independent named entity recognition,'' in
@@ -37,11 +42,6 @@ S.~Pradhan, A.~Moschitti, N.~Xue, H.~T. Ng, A.~Bj{\"o}rkelund, O.~Uryupina,
 P.-Y. Genest, P.-E. Portier, E.~Egyed-Zsigmond, and M.~Lovisetto, ``{OWNER} --
   toward unsupervised open-world named entity recognition,'' \emph{{IEEE}
   Access}, vol.~13, pp. 50\,077--50\,093, 2025.
-
-\bibitem{zhang-etal-2024-dtrans}
-X.~Zhang, B.~Yu, X.~Cong, T.~Su, Q.~Li, T.~Liu, and H.~Xu, ``Cross-domain {NER}
-  under a divide-and-transfer paradigm,'' \emph{{ACM} Transactions on
-  Information Systems}, vol.~42, no.~5, pp. 137:1--137:26, 2024.
 
 \bibitem{zhou-etal-2024-universalner}
 W.~Zhou, S.~Zhang, Y.~Gu, M.~Chen, and M.~Chen, ``{U}niversal{NER}: Targeted
@@ -98,13 +98,14 @@ J.~Ma, M.~Ballesteros, S.~Doss, R.~Anubhai, S.~Mallya, Y.~Al-Onaizan, and
 
 \bibitem{wei-etal-2023-chatie}
 Z.~Wei, J.~Su, Y.~Wang, Y.~Tian, and Y.~Chang, ``Zero-shot named entity
-  recognition with large language models,'' in \emph{arXiv preprint
-  arXiv:2401.15303}, 2023.
+  recognition with large language models,'' \emph{arXiv preprint
+  arXiv:2401.15303}, 2024.
 
-\bibitem{he-etal-2021-deberta}
-P.~He, X.~Liu, J.~Gao, and W.~Chen, ``{D}e{BERT}a: Decoding-enhanced {BERT}
-  with disentangled attention,'' in \emph{International Conference on Learning
-  Representations}, 2021.
+\bibitem{he-etal-2023-debertav3}
+P.~He, J.~Gao, and W.~Chen, ``{D}e{BERT}a{V}3: Improving {D}e{BERT}a using
+  {ELECTRA}-style pre-training with gradient-disentangled embedding sharing,''
+  in \emph{The Eleventh International Conference on Learning Representations},
+  2023.
 
 \bibitem{macqueen-1967-kmeans}
 J.~MacQueen, ``Some methods for classification and analysis of multivariate
@@ -130,8 +131,8 @@ F.~Petroni, T.~Rockt{\"a}schel, S.~Riedel, P.~Lewis, A.~Bakhtin, Y.~Wu, and
 
 \bibitem{jiang-etal-2020-know}
 Z.~Jiang, F.~F. Xu, J.~Araki, and G.~Neubig, ``How can we know what language
-  models know?'' in \emph{Transactions of the Association for Computational
-  Linguistics}, vol.~8, 2020, pp. 423--438.
+  models know?'' \emph{Transactions of the Association for Computational
+  Linguistics}, vol.~8, pp. 423--438, 2020.
 
 \bibitem{li-liang-2021-prefix}
 X.~L. Li and P.~Liang, ``Prefix-tuning: Optimizing continuous prompts for
@@ -179,14 +180,25 @@ J.~Kirkpatrick, R.~Pascanu, N.~Rabinowitz, J.~Veness, G.~Desjardins, A.~A.
   in neural networks,'' \emph{Proceedings of the National Academy of Sciences},
   vol. 114, no.~13, pp. 3521--3526, 2017.
 
+\bibitem{arthur-vassilvitskii-2007-kmeanspp}
+D.~Arthur and S.~Vassilvitskii, ``{$k$-means++}: The advantages of careful
+  seeding,'' in \emph{Proceedings of the 18th Annual {ACM}-{SIAM} Symposium on
+  Discrete Algorithms}, 2007, pp. 1027--1035.
+
 \bibitem{vinh-etal-2010-ami}
 N.~X. Vinh, J.~Epps, and J.~Bailey, ``Information theoretic measures for
   clusterings comparison: Variants, properties, normalization and correction
-  for chance,'' vol.~11, 2010, pp. 2837--2854.
+  for chance,'' \emph{Journal of Machine Learning Research}, vol.~11, pp.
+  2837--2854, 2010.
 
 \bibitem{zhang-etal-2020-bertscore}
 T.~Zhang, V.~Kishore, F.~Wu, K.~Q. Weinberger, and Y.~Artzi, ``{BERT}score:
   Evaluating text generation with {BERT},'' in \emph{International Conference
   on Learning Representations}, 2020.
+
+\bibitem{hu-etal-2022-lora}
+E.~J. Hu, Y.~Shen, P.~Wallis, Z.~Allen-Zhu, Y.~Li, S.~Wang, L.~Wang, and
+  W.~Chen, ``{LoRA}: Low-rank adaptation of large language models,'' in
+  \emph{International Conference on Learning Representations}, 2022.
 
 \end{thebibliography}

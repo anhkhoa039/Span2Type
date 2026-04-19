@@ -1,6 +1,6 @@
 \babel@toc {english}{}\relax 
-\contentsline {chapter}{中文摘要}{i}{Doc-Start}%
-\contentsline {chapter}{Abstract}{ii}{Doc-Start}%
+\contentsline {chapter}{摘要}{i}{Doc-Start}%
+\contentsline {chapter}{Abstract}{iii}{Doc-Start}%
 \contentsline {chapter}{\numberline {1}Introduction}{1}{chapter.1}%
 \contentsline {section}{\numberline {1.1}Motivation}{4}{section.1.1}%
 \contentsline {paragraph}{Challenge 1: Robust span detection across domains without target supervision.}{5}{section.1.1}%
@@ -55,14 +55,14 @@
 \contentsline {section}{\numberline {4.4}Main Results}{31}{section.4.4}%
 \contentsline {section}{\numberline {4.5}Entity Detection Results}{33}{section.4.5}%
 \contentsline {section}{\numberline {4.6}Cluster Naming Results}{34}{section.4.6}%
-\contentsline {section}{\numberline {4.7}Ablation Study}{38}{section.4.7}%
-\contentsline {section}{\numberline {4.8}Discussion}{40}{section.4.8}%
-\contentsline {paragraph}{Effect of multi-view entity detection.}{40}{section.4.8}%
-\contentsline {paragraph}{End-to-end NER improvement.}{40}{section.4.8}%
-\contentsline {paragraph}{Effect of source corpus.}{41}{section.4.8}%
-\contentsline {paragraph}{Soft prompt tuning and ensemble detection.}{41}{section.4.8}%
-\contentsline {chapter}{\numberline {5}Conclusion}{42}{chapter.5}%
-\contentsline {section}{\numberline {5.1}Summary of Contributions}{42}{section.5.1}%
-\contentsline {section}{\numberline {5.2}Limitations}{43}{section.5.2}%
-\contentsline {section}{\numberline {5.3}Future Work}{44}{section.5.3}%
-\contentsline {chapter}{\textbf {Bibliography}}{46}{section.5.3}%
+\contentsline {section}{\numberline {4.7}Ablation Study}{40}{section.4.7}%
+\contentsline {section}{\numberline {4.8}Discussion}{42}{section.4.8}%
+\contentsline {paragraph}{Effect of multi-view entity detection.}{42}{section.4.8}%
+\contentsline {paragraph}{End-to-end NER improvement.}{42}{section.4.8}%
+\contentsline {paragraph}{Effect of source corpus.}{43}{section.4.8}%
+\contentsline {paragraph}{Soft prompt tuning and ensemble detection.}{43}{section.4.8}%
+\contentsline {chapter}{\numberline {5}Conclusion}{44}{chapter.5}%
+\contentsline {section}{\numberline {5.1}Summary of Contributions}{44}{section.5.1}%
+\contentsline {section}{\numberline {5.2}Limitations}{45}{section.5.2}%
+\contentsline {section}{\numberline {5.3}Future Work}{46}{section.5.3}%
+\contentsline {chapter}{\textbf {Bibliography}}{48}{section.5.3}%

@@ -1,18 +1,21 @@
 \clearpage
-%\setcounter{page}{5}
-\addcontentsline{toc}{chapter}{中文摘要}
+
+\addcontentsline{toc}{chapter}{摘要}
 \begin{center}
-	\textbf{\large 中文摘要}
+    \textbf{\large 摘要}
 \end{center}
-摘要
+
+在新領域或特定領域中，命名實體識別（Named Entity Recognition, NER）通常需要人工定義實體類型並標註資料，此過程不僅耗費成本，且需要領域專家的參與。這項限制促使了\textbf{開放世界命名實體識別（Open-world NER）}的發展，其目標不僅是從未標註的文本中偵測實體提及（entity mentions），更要自動\textbf{發掘並命名潛在的實體類型}。
+
+在本論文中，我們探討在領域轉移（domain shift）下的非監督式開放世界NER。在此情境下，實體類型並未預先定義，而系統效能則取決於高召回率（high-recall）的提及偵測，以及具鑑別力的實體表徵（entity representations）以進行分群。基於OWNER框架，我們提出三項改進。首先，我們以多視角分治轉移（multi-view divide-and-transfer）框架~\cite{zhang-etal-2024-dtrans}取代OWNER的提及偵測機制：一個共享的文本編碼器（text encoder）連接三個互補的解碼頭（decoding heads）——BIO標註、起始/結束邊界標註，以及連繫/斷開（tie/break）跨度連結。將這三者的結果進行集成（ensembled）與過濾，以產生穩健且高召回率的實體跨度（entity spans）。其次，在實體分類（entity typing）方面，我們引入了軟提示實體編碼（soft-prompt entity encoding），透過在BERT風格的編碼器前附加可訓練的虛擬詞元（virtual tokens），並利用提示詞中[MASK]位置的上下文隱藏狀態（contextualized hidden state）來表示每個實體提及，從而改善開放世界分群的任務條件調節（task conditioning）。第三，我們提出了一個分群命名框架，為給定的語料庫生成人類可讀的實體類型名稱：我們透過最大邊際相關性（maximal marginal relevance, MMR）挑選出具多樣性的分群範例（cluster exemplars），接著使用遮蔽語言模型（masked language modeling, MLM）共識或本地端大型語言模型（Ollama）推論出簡潔的類別名稱，並以BERTScore評估命名品質。
+
+結合上述元件，我們構建了一個端到端（end-to-end）、更具穩健性與可解釋性的非監督式開放世界NER系統。該系統不僅能對實體進行分群，還能為新的語料庫產生具可讀性的類型清單（type inventories）。
 
 \vspace*{1cm}
-\noindent
-關鍵詞: 
+
+\noindent\textbf{關鍵字：}開放世界命名實體識別（Open-world Named Entity Recognition）；非監督式NER（Unsupervised NER）；領域轉移（Domain Shift）；提及偵測（Mention Detection）；多視角解碼（Multi-view Decoding）；實體分類（Entity Typing）；軟提示（Soft Prompting）；表徵學習（Representation Learning）；分群（Clustering）；分群命名（Cluster Naming）；遮蔽語言模型（Masked Language Modeling）；本地大型語言模型（Local LLM）
 
 \begin{comment}
 
 
 \end{comment}
-
-
