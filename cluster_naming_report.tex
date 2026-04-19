@@ -1,0 +1,315 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[margin=2.5cm, headheight=14pt]{geometry}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{microtype}
+\usepackage{parskip}
+\usepackage{enumitem}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{tabularx}
+\usepackage{colortbl}
+
+% Colour accents
+\definecolor{ownerblue}{RGB}{30,80,160}
+\definecolor{lightgray}{RGB}{245,245,245}
+\definecolor{bertcolor}{RGB}{220,240,255}
+\definecolor{llmcolor}{RGB}{220,255,230}
+\definecolor{wincolor}{RGB}{180,220,180}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=ownerblue,
+  urlcolor=ownerblue,
+  citecolor=ownerblue,
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{\textcolor{gray}{\small OWNER -- Cluster Naming Evaluation}}
+\lhead{\textcolor{gray}{\small BERTScore Report}}
+\rfoot{\thepage}
+
+\titleformat{\section}{\large\bfseries\color{ownerblue}}{{\thesection}}{1em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{{\thesubsection}}{1em}{}
+
+\begin{document}
+
+% ─── Title ───────────────────────────────────────────────────────────────────
+\begin{center}
+  {\LARGE\bfseries\color{ownerblue}
+    Cluster Naming Evaluation Report\\[0.4em]
+    \large OWNER: Toward Unsupervised Open-World Named Entity Recognition}\\[1em]
+  {\large Comparison of BERT-based and LLM-based (Llama-3.1-8B) Naming\\
+  Evaluated with BERTScore across Five CrossNER Domains}\\[0.8em]
+  {\small \today}
+\end{center}
+\vspace{0.5em}
+\hrule
+\vspace{1.5em}
+
+% ─── Abstract ────────────────────────────────────────────────────────────────
+\begin{abstract}
+OWNER~\cite{genest2025owner} organises extracted entities into clusters
+whose integer IDs carry no semantic meaning.
+This report evaluates two automatic cluster-naming strategies proposed in the
+paper: (1)~\textbf{BERT-based naming}, which predicts the most frequent
+\texttt{[MASK]} token across all entities in a cluster, and
+(2)~\textbf{LLM-based naming} (Llama-3.1-8B via Ollama), which infers a type
+label from a sample of $n{=}16$ entities using the Figure~3 prompt.
+Named clusters are scored against ground-truth entity type labels using
+\textbf{BERTScore} (RoBERTa-large backbone) across five CrossNER domains:
+AI, Literature, Music, Politics, and Science.
+BERT naming achieves an average F$_1$ of \textbf{0.966} while LLM naming
+achieves \textbf{0.944}, with BERT performing consistently better except
+on the Music domain where both methods are within 0.001 F$_1$ of each other.
+\end{abstract}
+
+% ─── 1. Introduction ─────────────────────────────────────────────────────────
+\section{Introduction}
+
+Named Entity Recognition (NER) traditionally requires a fixed, predefined
+set of entity types. OWNER removes this constraint by clustering entity
+embeddings into semantically coherent groups, automatically discovering the
+number and nature of entity types without annotation. However, the resulting
+clusters are identified only by integer IDs. Assigning meaningful names to
+these clusters is necessary for interpretability, knowledge graph construction,
+and human evaluation.
+
+The paper proposes two complementary naming strategies (Section~III-B-3-C):
+
+\begin{itemize}[leftmargin=1.5em]
+  \item \textbf{BERT naming}: leverage the same BERT encoder used for entity
+    typing. For each entity, the prompt
+    $\mathcal{P}(e,X)=\texttt{``\{sentence\} \{entity\} is a [MASK].''}$
+    is passed through the MLM head; the top-1 predicted token is collected.
+    The most frequent predicted token across all entities in a cluster
+    becomes its name. This approach is cost-free as the encoder is already
+    available.
+  \item \textbf{LLM naming}: a random sample of $n=16$ entity strings is
+    presented to Llama-3.1-8B-Instruct (via Ollama) using the prompt in
+    Figure~3 of the paper (temperature~$= 0$). The model responds with a
+    single entity type name.
+\end{itemize}
+
+\noindent
+Both approaches are evaluated against ground-truth labels using
+BERTScore~\cite{zhang2020bertscore}, which measures token-level semantic
+similarity via contextualised RoBERTa-large embeddings.
+
+% ─── 2. Experimental Setup ───────────────────────────────────────────────────
+\section{Experimental Setup}
+
+\subsection{Datasets}
+
+We evaluate on five CrossNER target domains used in the OWNER paper.
+Table~\ref{tab:datasets} summarises the number of entity types and aligned
+clusters in each domain.
+
+\begin{table}[h]
+\centering
+\caption{CrossNER target domains and cluster statistics.}
+\label{tab:datasets}
+\setlength{\tabcolsep}{8pt}
+\begin{tabular}{l r r}
+\toprule
+\textbf{Domain} & \textbf{True entity types} $k$ & \textbf{Aligned clusters} \\
+\midrule
+AI         & 14 & 16 \\
+Literature & 12 & 14 \\
+Music      & 13 & 20 \\
+Politics   & 9  & 22 \\
+Science    & 17 & 20 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Ground-Truth Alignment}
+
+The ground-truth label for each cluster is determined by finding the
+true entity type that contributes the highest proportion of entities to
+that cluster (column-wise argmax of the confusion matrix), stored as
+\texttt{et\_test\_cluster\_naming\_gt.json}.
+Only clusters present in all three files (GT, BERT, LLM) are included in
+the evaluation.
+
+\subsection{BERTScore}
+
+BERTScore computes precision, recall, and F$_1$ by greedily matching
+tokens of the candidate string to tokens of the reference string using
+cosine similarity of RoBERTa-large contextual embeddings.
+We report macro-averaged P, R, F$_1$ across all aligned clusters within
+each domain, and then macro-average over domains.
+
+% ─── 3. Results ──────────────────────────────────────────────────────────────
+\section{Results}
+
+\subsection{BERTScore per Domain}
+
+Table~\ref{tab:bertscore} presents the full BERTScore results.
+Bold entries indicate the better F$_1$ for each domain.
+
+\begin{table}[h]
+\centering
+\caption{BERTScore (Precision / Recall / F$_1$) of BERT-based and
+LLM-based naming against ground-truth labels.
+$k$ = number of aligned clusters.
+Best F$_1$ per domain in \textbf{bold}.}
+\label{tab:bertscore}
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{l r ccc r ccc}
+\toprule
+& \multicolumn{4}{c}{\cellcolor{bertcolor}\textbf{BERT Naming}}
+& \multicolumn{4}{c}{\cellcolor{llmcolor}\textbf{LLM Naming (Llama-3.1-8B)}} \\
+\cmidrule(lr){2-5}\cmidrule(lr){6-9}
+\textbf{Domain} & $k$ & P & R & F$_1$ & $k$ & P & R & F$_1$ \\
+\midrule
+AI         & 16 & 0.992 & 0.986 & \textbf{0.989} & 16 & 0.915 & 0.945 & 0.929 \\
+Literature & 14 & 0.974 & 0.975 & \textbf{0.974} & 14 & 0.950 & 0.960 & 0.954 \\
+Music      & 20 & 0.965 & 0.951 & \textbf{0.958} & 20 & 0.960 & 0.955 & 0.957 \\
+Politics   & 22 & 0.968 & 0.962 & \textbf{0.964} & 22 & 0.945 & 0.961 & 0.953 \\
+Science    & 20 & 0.949 & 0.943 & \textbf{0.945} & 20 & 0.922 & 0.933 & 0.926 \\
+\midrule
+\textbf{Average} & 92 & \textbf{0.970} & \textbf{0.963} & \textbf{0.966}
+                 & 92 & 0.938 & 0.951 & 0.944 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Qualitative Examples}
+
+Table~\ref{tab:examples} shows representative cluster naming examples
+from the five domains, illustrating where each method succeeds or struggles.
+
+\begin{table}[h]
+\centering
+\caption{Selected cluster naming examples. \textcolor{green!60!black}{Green}
+= correct or near-correct; \textcolor{red!70!black}{red} = incorrect.}
+\label{tab:examples}
+\setlength{\tabcolsep}{4pt}
+\small
+\begin{tabularx}{\textwidth}{l l X X X}
+\toprule
+\textbf{Domain} & \textbf{Cluster} & \textbf{Ground Truth}
+  & \textbf{BERT Name} & \textbf{LLM Name} \\
+\midrule
+AI         & 11 & conference     & \textcolor{green!60!black}{conference}     & \textcolor{green!60!black}{Conference} \\
+AI         & 9  & university     & \textcolor{green!60!black}{university}     & \textcolor{green!60!black}{Universities} \\
+AI         & 1  & researcher     & \textcolor{green!60!black}{physicist}      & \textcolor{green!60!black}{Computer Scientist} \\
+AI         & 13 & person         & \textcolor{red!70!black}{vegetarian}       & \textcolor{green!60!black}{Person} \\
+\midrule
+Literature & 2  & writer         & \textcolor{green!60!black}{poet}           & \textcolor{green!60!black}{Author} \\
+Literature & 13 & literarygenre  & \textcolor{green!60!black}{genre}          & \textcolor{orange!80!black}{Literary work} \\
+Literature & 0  & book           & \textcolor{red!70!black}{vegetarian}       & \textcolor{green!60!black}{Novel} \\
+\midrule
+Music      & 3  & band           & \textcolor{green!60!black}{band}           & \textcolor{green!60!black}{Band} \\
+Music      & 7  & musicgenre     & \textcolor{green!60!black}{genre}          & \textcolor{green!60!black}{Music genres} \\
+Music      & 4  & musicalartist  & \textcolor{red!70!black}{vegetarian}       & \textcolor{green!60!black}{Singer} \\
+\midrule
+Politics   & 7  & politicalparty & \textcolor{green!60!black}{party}          & \textcolor{green!60!black}{Political party} \\
+Politics   & 11 & politician     & \textcolor{green!60!black}{democrat}       & \textcolor{green!60!black}{Politician} \\
+Politics   & 16 & person         & \textcolor{red!70!black}{vegetarian}       & \textcolor{red!70!black}{Actor} \\
+\midrule
+Science    & 15 & protein        & \textcolor{green!60!black}{protein}        & \textcolor{green!60!black}{Protein} \\
+Science    & 9  & scientist      & \textcolor{green!60!black}{physicist}      & \textcolor{green!60!black}{Physicist} \\
+Science    & 5  & astronomicalobj & \textcolor{green!60!black}{planet}        & \textcolor{green!60!black}{Planet} \\
+Science    & 14 & person         & \textcolor{red!70!black}{vegetarian}       & \textcolor{red!70!black}{Actor} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+% ─── 4. Analysis ─────────────────────────────────────────────────────────────
+\section{Analysis}
+
+\subsection{BERT Naming Strengths and Limitations}
+
+BERT naming achieves the highest average F$_1$ (0.966) at zero additional
+inference cost since the encoder is already loaded for entity typing.
+It excels at domain-specific technical terms (\textit{conference},
+\textit{university}, \textit{protein}, \textit{genre}) where BERT's
+pretraining vocabulary is well-aligned with the entity types.
+
+However, BERT naming exhibits a known artefact: \textbf{\texttt{vegetarian}}
+appears repeatedly across domains as a predicted token. This occurs because
+the prompt template \texttt{``X is a [MASK].''} in unusual entity contexts
+triggers BERT to predict words from common fill-in-the-blank patterns
+unrelated to entity types. This affects clusters 13 (AI), 0 (Literature),
+1 and 4 and 19 (Music), 13 and 16 (Politics), and 14 (Science).
+
+An additional limitation is that BERT predicts a \emph{single sub-word
+token}, so multi-word entity types such as
+\texttt{astronomicalobject}, \texttt{chemicalelement}, or
+\texttt{musicalartist} can never be predicted exactly.
+
+\subsection{LLM Naming Strengths and Limitations}
+
+LLM naming (Llama-3.1-8B, $n=16$) produces more natural and
+multi-word type names (\textit{Computer Scientist},
+\textit{Political party}, \textit{Scientific Journals}), avoiding the
+single-token constraint. It never produces nonsensical artefacts like
+\texttt{vegetarian}.
+
+However, the LLM occasionally over-generalises:
+\begin{itemize}[leftmargin=1.5em]
+  \item \textit{Stadiums} for \texttt{country} (AI, cluster 4)
+  \item \textit{Actor}/\textit{Celebrity} for \texttt{person} (Politics,
+    Science)
+  \item \textit{Song} for \texttt{album} (Music, cluster 6)
+\end{itemize}
+This occurs when the sampled entities are dominated by false positives or
+semantically diverse spans that mislead the model.
+
+\subsection{Domain-level Observations}
+
+\begin{itemize}[leftmargin=1.5em]
+  \item \textbf{AI} shows the largest gap between methods
+    ($\Delta$F$_1 = 0.060$), likely because BERT's pretraining includes
+    substantial AI literature where \textit{conference} and
+    \textit{university} appear in exactly the fill-in-the-blank pattern.
+  \item \textbf{Music} shows the smallest gap ($\Delta$F$_1 = 0.001$),
+    with both methods performing well on concrete musical concepts.
+  \item \textbf{Science} yields the lowest scores for both methods,
+    reflecting the domain's fine-grained types
+    (\textit{chemicalelement}, \textit{astronomicalobject},
+    \textit{academicjournal}) that require specialised vocabulary.
+\end{itemize}
+
+% ─── 5. Conclusion ───────────────────────────────────────────────────────────
+\section{Conclusion}
+
+Both naming strategies produce semantically meaningful cluster labels
+without any labelled data. BERT naming is the stronger method
+on average (F$_1$~0.966 vs 0.944) and comes at no extra cost, while LLM
+naming provides more readable, multi-word labels and avoids degenerate
+predictions. The two approaches are complementary: BERT naming is
+recommended for technical domains with single-word type names, while
+LLM naming is preferred when human-readable output or multi-word labels
+are required.
+
+Future work could combine both approaches: use BERT naming as a candidate
+and LLM naming as a verifier, or fine-tune the LLM on domain-specific
+entity samples to reduce hallucination.
+
+% ─── References ──────────────────────────────────────────────────────────────
+\begin{thebibliography}{9}
+
+\bibitem{genest2025owner}
+P.-Y.~Genest, P.-E.~Portier, E.~Egyed-Zsigmond, and M.~Lovisetto,
+``OWNER -- Toward Unsupervised Open-World Named Entity Recognition,''
+\textit{IEEE Access}, vol.~13, pp.~50077--50096, 2025.
+
+\bibitem{zhang2020bertscore}
+T.~Zhang, V.~Kishore, F.~Wu, K.~Q.~Weinberger, and Y.~Artzi,
+``BERTScore: Evaluating Text Generation with BERT,''
+in \textit{Proc. ICLR}, 2020.
+
+\end{thebibliography}
+
+\end{document}

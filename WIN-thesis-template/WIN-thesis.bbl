@@ -43,6 +43,12 @@ X.~Zhang, B.~Yu, X.~Cong, T.~Su, Q.~Li, T.~Liu, and H.~Xu, ``Cross-domain {NER}
   under a divide-and-transfer paradigm,'' \emph{{ACM} Transactions on
   Information Systems}, vol.~42, no.~5, pp. 137:1--137:26, 2024.
 
+\bibitem{zhou-etal-2024-universalner}
+W.~Zhou, S.~Zhang, Y.~Gu, M.~Chen, and M.~Chen, ``{U}niversal{NER}: Targeted
+  distillation from large language models for open named entity recognition,''
+  in \emph{The Twelfth International Conference on Learning Representations},
+  2024.
+
 \bibitem{carbonell-goldstein-1998-use}
 J.~Carbonell and J.~Goldstein, ``The use of {MMR}, diversity-based reranking
   for reordering documents and producing summaries,'' in \emph{Proceedings of
@@ -118,12 +124,6 @@ F.~Petroni, T.~Rockt{\"a}schel, S.~Riedel, P.~Lewis, A.~Bakhtin, Y.~Wu, and
 Z.~Jiang, F.~F. Xu, J.~Araki, and G.~Neubig, ``How can we know what language
   models know?'' in \emph{Transactions of the Association for Computational
   Linguistics}, vol.~8, 2020, pp. 423--438.
-
-\bibitem{zhou-etal-2024-universalner}
-W.~Zhou, S.~Zhang, Y.~Gu, M.~Chen, and M.~Chen, ``{U}niversal{NER}: Targeted
-  distillation from large language models for open named entity recognition,''
-  in \emph{The Twelfth International Conference on Learning Representations},
-  2024.
 
 \bibitem{li-etal-2023-gliner}
 U.~Zaratiana, N.~Tomeh, P.~Holat, and T.~Charnois, ``{GL}i{NER}: Generalist
@@ -213,6 +213,13 @@ O.~Sainz, I.~Garc{\'i}a-Ferrero, R.~Agerri, O.~L. de~Lacalle, G.~Rigau, and
 F.~Schroff, D.~Kalenichenko, and J.~Philbin, ``{FaceNet}: A unified embedding
   for face recognition and clustering,'' in \emph{Proceedings of the {IEEE}
   Conference on Computer Vision and Pattern Recognition}, 2015, pp. 815--823.
+
+\bibitem{kirkpatrick-etal-2017-overcoming}
+J.~Kirkpatrick, R.~Pascanu, N.~Rabinowitz, J.~Veness, G.~Desjardins, A.~A.
+  Rusu, K.~Milan, J.~Quan, T.~Ramalho, A.~Grabska-Barwinska, D.~Hassabis,
+  C.~Clopath, D.~Kumaran, and R.~Hadsell, ``Overcoming catastrophic forgetting
+  in neural networks,'' \emph{Proceedings of the National Academy of Sciences},
+  vol. 114, no.~13, pp. 3521--3526, 2017.
 
 \bibitem{zhang-etal-2020-bertscore}
 T.~Zhang, V.~Kishore, F.~Wu, K.~Q. Weinberger, and Y.~Artzi, ``{BERT}score:

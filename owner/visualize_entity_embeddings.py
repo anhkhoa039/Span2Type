@@ -3,7 +3,7 @@
 Example (from repo root):
   python -m owner.visualize_entity_embeddings \\
     --checkpoint checkpoints/owner/conll2003/new_model/entity_typing.pt \\
-    --output outputs/crossner_entity_tsne.png
+    --output outputs/soft_prompt.png
 """
 from __future__ import annotations
 
@@ -53,7 +53,7 @@ def _collect_embeddings(
         num_workers=get_num_workers(),
     )
     model = EntityEncodingModel(plm_name)
-    # model = SoftPromptEntityEncodingModel(plm_name)
+    model = SoftPromptEntityEncodingModel(plm_name)
     state = torch.load(str(checkpoint), map_location="cpu")
     model.load_state_dict(state)
     model.to(device)

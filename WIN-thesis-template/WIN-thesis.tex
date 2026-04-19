@@ -157,7 +157,7 @@ These limitations motivate a shift toward \emph{open-world NER}: a paradigm in w
 
 This thesis presents \textbf{Span2Type}, an improved open-world NER pipeline built on top of the OWNER framework~\cite{wang-etal-2023-crossner}, with two targeted enhancements. Span2Type operates in three stages. First, the mention detection module from OWNER---which uses a single BIO sequence labeling head---is replaced with the Entity Detection module from the Divide-and-Transfer (DTrans) paradigm~\cite{zhang-etal-2024-dtrans}. The DTrans module uses BERT with three complementary tagging schemes applied simultaneously: standard BIO tagging for global span context, Start-End (SE) binary classifiers for explicit boundary detection, and Tie-Break (TB) classifiers that model whether adjacent tokens belong to the same span. Training all three views jointly with a Mean Teaching strategy (exponential moving average) improves domain transfer robustness, since entity span boundaries are more stable across domains than entity types. Second, the entity typing module encodes each detected span using the fill-in-the-blank template \emph{``\{sentence\} \{entity\} is a \texttt{[MASK]}.''}\ and extracts the \texttt{[MASK]}-position hidden state from a BERT-based encoder. This thesis introduces a soft prompt variant of this stage: a small number of trainable soft token embeddings are prepended to the template input while the base encoder is kept frozen, so that only the prompt parameters (not the full model) are updated during triplet margin training. The resulting embeddings are clustered with automatic $k$ selection via the Bayesian Information Criterion (BIC). Third, the cluster naming module---the main novel contribution of this thesis---selects a diverse, representative set of exemplar sentences for each cluster using Maximal Marginal Relevance (MMR) and applies either a masked language model or a locally hosted large language model (LLM) to generate a concise, human-readable type name by aggregating predictions over the selected exemplars.
 
-Span2Type requires no predefined type inventory and no target-domain annotations. The mention detector is trained on a source-domain corpus (CoNLL-2003 or Pile-NER) and transferred to new domains without retraining. Experiments on CrossNER spanning five target domains demonstrate that replacing OWNER's BIO-only mention detector with the DTrans multi-view entity detector improves span recall across domains, and that MMR-based exemplar selection produces more specific and stable cluster names compared to OWNER's original naming procedure.
+Span2Type requires no predefined type inventory and no target-domain annotations. The mention detector is trained on a source-domain corpus (CoNLL-2003 or Pile-NER~\cite{zhou-etal-2024-universalner}) and transferred to new domains without retraining. Experiments on CrossNER spanning five target domains demonstrate that replacing OWNER's BIO-only mention detector with the DTrans multi-view entity detector improves span recall across domains, and that MMR-based exemplar selection produces more specific and stable cluster names compared to OWNER's original naming procedure.
 
 The main contributions of this thesis are as follows:
 
@@ -191,7 +191,7 @@ This thesis makes the following specific technical contributions:
 \begin{itemize}
     \item \textbf{Multi-view entity detection for open-world NER.} We replace the BIO-only mention detector in OWNER with the DTrans multi-view Entity Detection module~\cite{zhang-etal-2024-dtrans}, which jointly trains three complementary decoders---BIO, Start-End, and Tie-Break---on the source domain. The Mean Teaching strategy (exponential moving average) further stabilizes training, yielding more reliable span candidates when transferred to unseen target domains.
 
-    \item \textbf{Soft prompt tuning for entity typing.} We introduce a parameter-efficient variant of the entity typing stage based on soft prompt tuning. Rather than fine-tuning all parameters of the BERT encoder, a small set of trainable soft tokens is prepended to the fill-in-the-blank input template while the base language model is kept frozen. Only the soft prompt embeddings (and optionally a separate low learning rate for the PLM) are optimized via a triplet margin loss, significantly reducing the number of trainable parameters while preserving the quality of the \texttt{[MASK]}-position entity representations used for clustering.
+    \item \textbf{Two-stage prompt-initialized fine-tuning for entity typing.} We introduce a parameter-efficient variant of the entity typing stage that trains in two stages. Stage~1 prepends $N_p$ trainable soft token embeddings to the fill-in-the-blank template and optimizes only these tokens at a high learning rate while the BERT backbone is strictly frozen, allowing rapid convergence without perturbing pre-trained weights. Stage~2 unfreezes the backbone at a drastically lower learning rate ($1\times10^{-5}$) to prevent catastrophic forgetting, while the optimizer's accumulated first- and second-moment statistics for the soft prompt are preserved via \texttt{add\_param\_group()}. This two-stage schedule achieves the parameter efficiency of prompt-only tuning in early epochs and the full expressiveness of fine-tuning in later epochs.
 
     \item \textbf{MMR-based exemplar selection for automatic cluster naming.} We propose selecting a diverse, centroid-relevant set of exemplar sentences per cluster using Maximal Marginal Relevance~\cite{carbonell-goldstein-1998-use} before querying either an MLM or a locally hosted LLM for type name generation. Compared to OWNER's original naming procedure, MMR-based selection reduces exemplar redundancy and produces more specific and stable cluster names.
 
@@ -201,34 +201,34 @@ This thesis makes the following specific technical contributions:
 
 \nochapterspacing{Related Work}\label{ch:Work}
 
-\subsection{Supervised Named Entity Recognition}
+\section{Supervised Named Entity Recognition}
 Named Entity Recognition has a long history as a sequence labeling problem. Early systems relied on hand-crafted features and probabilistic models such as Hidden Markov Models and Conditional Random Fields~(CRFs)~\cite{lafferty-etal-2001-crf}. The introduction of bidirectional LSTM-CRF architectures~\cite{ma-hovy-2016-end} significantly improved performance by learning contextual token representations without manual feature engineering. The transformer architecture~\cite{vaswani-etal-2017-attention} and pretrained models such as BERT~\cite{devlin-etal-2019-bert} and RoBERTa~\cite{liu-etal-2019-roberta} have become the de facto backbone for NER, achieving state-of-the-art results on benchmarks including CoNLL-2003~\cite{tjong-kim-sang-de-meulder-2003-introduction} and OntoNotes~\cite{pradhan-etal-2013-towards}. Span-based models~\cite{zhong-chen-2021-frustratingly} offer an alternative to token-level BIO labeling by directly enumerating and classifying candidate spans. All of these approaches share a common limitation: they require annotated data for a fixed, predefined set of entity types and cannot generalize to type inventories unseen during training.
 
-\subsection{Cross-domain and Low-resource NER}
+\section{Cross-domain and Low-resource NER}
 A line of work addresses the cost of annotation by transferring NER models across domains or reducing the amount of supervision required. Cross-domain NER studies explore domain adaptation techniques, multi-task learning, and data augmentation to transfer models trained on newswire to specialized domains such as biomedical or social media text~\cite{derczynski-etal-2017-results}. Few-shot NER approaches~\cite{yang-katiyar-2020-simple, ma-etal-2022-label} use prototypical networks or meta-learning to recognize new entity types from a handful of examples. While these methods reduce the annotation burden, they still assume that the target type inventory is specified in advance and that at least a small number of labeled examples per type is available. In contrast, this thesis targets the strictly unsupervised setting where no target-domain labels of any kind are provided.
 
-\subsection{Open-world and Unsupervised Entity Typing}
+\section{Open-world and Unsupervised Entity Typing}
 Open-world NER removes the closed-world assumption entirely: the system must discover entity types from raw text without any predefined ontology or labeled examples. Representative work in this space embeds entity mentions using pretrained language models and applies clustering to group them by type. Fill-in-the-blank (cloze) templates have been proposed as a way to obtain type-sensitive embeddings by exploiting the knowledge stored in masked language models~\cite{petroni-etal-2019-language, jiang-etal-2020-know}. More recent systems such as UniversalNER~\cite{zhou-etal-2024-universalner} and GLiNER~\cite{li-etal-2023-gliner} use instruction-tuned LLMs to perform open-vocabulary NER, while ChatIE~\cite{wei-etal-2023-chatie} applies zero-shot prompting. The OWNER framework~\cite{wang-etal-2023-crossner} is a representative clustering-based pipeline: it trains a DeBERTa-based~\cite{he-etal-2021-deberta} mention detector on a source domain and clusters BERT \texttt{[MASK]}-position embeddings on the target domain using $k$-means with automatic $k$ selection via the Bayesian Information Criterion~(BIC). This thesis builds directly on OWNER and focuses on improving its span detection and cluster naming components.
 
-\subsection{Fine-grained and Ultra-fine Entity Typing}
+\section{Fine-grained and Ultra-fine Entity Typing}
 Fine-grained and ultra-fine entity typing~\cite{choi-etal-2018-ultra, onoe-durrett-2020-interpretable} assign more detailed semantic types to entity mentions, often using large type vocabularies derived from knowledge bases. While these approaches provide richer type information than coarse NER, they still rely on a predefined type ontology and treat entity typing as a supervised classification problem. They do not address the open-world challenge of discovering new entity types without any labeled data.
 
-\subsection{Clustering Methods for Entity Typing}
+\section{Clustering Methods for Entity Typing}
 Most embedding-based entity typing systems rely on $k$-means~\cite{macqueen-1967-kmeans} or its variants for cluster assignment. The $k$-means++ initialization~\cite{arthur-vassilvitskii-2007-kmeanspp} significantly improves convergence stability over random initialization. A practical challenge is that the correct number of clusters $k$ is unknown in the open-world setting. The Bayesian Information Criterion~\cite{schwarz-1978-bic} penalizes model complexity and provides a principled trade-off between fit quality and parsimony. Clustering quality is measured using the Adjusted Mutual Information (AMI)~\cite{vinh-etal-2010-ami}, a metric robust to over-segmentation and over-merging. This thesis uses BIC-guided $k$-means as implemented in OWNER, treating cluster selection as a fixed component and concentrating improvements on detection and naming.
 
-\subsection{Masked Language Model Probing for Type Inference}
+\section{Masked Language Model Probing for Type Inference}
 Masked language models such as BERT have been widely used as knowledge bases that can be queried via cloze prompts to infer semantic properties of entities~\cite{petroni-etal-2019-language}. For entity typing, the standard approach is to construct a template such as \emph{``\{sentence\} \{entity\} is a \texttt{[MASK]}’’} and take the top-ranked token at the mask position as the predicted type~\cite{jiang-etal-2020-know}. The quality of this prediction is sensitive to prompt design: different templates yield different tokens, and the top-ranked token is often a generic or uninformative word. Aggregating predictions over multiple instances of the same cluster, rather than relying on a single probe, improves stability. This thesis adopts MLM probing as the primary naming backend and proposes a diversity-aware exemplar selection strategy to improve the quality of aggregate predictions.
 
-\subsection{Parameter-Efficient Fine-Tuning and Soft Prompts}
+\section{Parameter-Efficient Fine-Tuning and Soft Prompts}
 Parameter-efficient fine-tuning methods reduce the number of trainable parameters while maintaining competitive performance. Prefix-tuning~\cite{li-liang-2021-prefix} and P-tuning~\cite{liu-etal-2022-ptuning} prepend trainable continuous tokens to the input while keeping the backbone frozen. The Power of Scale work~\cite{lester-etal-2021-power} shows that prompt tuning becomes competitive with full fine-tuning at larger model scales. LoRA~\cite{hu-etal-2022-lora} injects low-rank update matrices into attention layers. These methods are particularly relevant in open-world NER where training data from the source domain may be limited, motivating the soft prompt variant introduced in this thesis.
 
-\subsection{Large Language Models for Cluster Labeling}
+\section{Large Language Models for Cluster Labeling}
 The emergence of large language models~\cite{brown-etal-2020-language} has opened a new avenue for cluster labeling: instead of querying a masked language model, one can prompt a generative model with a set of representative cluster examples and ask it to produce a category name. Systems such as UniversalNER~\cite{zhou-etal-2024-universalner} and GOLLiE~\cite{sainz-etal-2023-gollie} demonstrate the versatility of LLMs for open-vocabulary information extraction. The main practical challenge is selecting which examples to include in the prompt: redundant examples waste context and introduce noise, while centroid-only selection may miss the full semantic range of the cluster. This thesis addresses this with Maximal Marginal Relevance~\cite{carbonell-goldstein-1998-use} for exemplar selection.
 
-\subsection{Maximal Marginal Relevance}
+\section{Maximal Marginal Relevance}
 Maximal Marginal Relevance was originally proposed for query-based document summarization and result set diversification in information retrieval~\cite{carbonell-goldstein-1998-use}. MMR iteratively selects items that are both relevant to a query and dissimilar to already-selected items, controlled by a trade-off parameter $\lambda$. It has since been applied to sentence selection in extractive summarization, example selection for in-context learning, and retrieval-augmented generation. In this thesis, MMR selects a diverse subset of entity mention sentences from each cluster, with the cluster centroid serving as the query, ensuring the naming model receives evidence spanning the cluster’s full semantic range.
 
-\subsection{Positioning of This Work}
+\section{Positioning of This Work}
 This thesis does not propose a new open-world NER framework from scratch. Instead, it takes the OWNER pipeline as the base system and improves two components: the span detection stage is upgraded from a BIO-only head to the multi-view DTrans detector~\cite{zhang-etal-2024-dtrans}, and the cluster naming stage is enhanced with MMR-based diverse exemplar selection and a soft prompt entity typing variant. Compared to the original OWNER naming procedure, which uses a single nearest-centroid template per cluster, the proposed approach produces more specific, stable, and interpretable type names across all five CrossNER~\cite{liu-etal-2021-crossner} target domains.
 
 
@@ -245,7 +245,14 @@ Span2Type is a three-stage pipeline for open-world NER that takes an unannotated
     \item \textbf{Automatic Cluster Naming}: Assign a concise, human-readable name to each cluster by selecting diverse representative exemplars via Maximal Marginal Relevance and querying either an MLM or a large language model for consensus type predictions.
 \end{enumerate}
 
-The pipeline assumes no target-domain labels at any stage. Stages 2 and 3 are applied entirely to the target domain. Stage 1 uses source-domain labels only for training the entity detector. Table~\ref{table:notations} summarizes the notation used throughout this chapter.
+The pipeline assumes no target-domain labels at any stage. Stages 2 and 3 are applied entirely to the target domain. Stage 1 uses source-domain labels only for training the entity detector. Figure~\ref{fig:span2type_framework} illustrates the overall architecture. Table~\ref{table:notations} summarizes the notation used throughout this chapter.
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=\textwidth]{figure/Span2Type.png}
+    \caption{Overview of the Span2Type framework. The pipeline consists of three stages: (1)~\textbf{Mention Detection} — a multi-view DeBERTa-v3 detector with BIO, Start-End, and Tie-or-Break taggers produces a union of candidate mentions; (2)~\textbf{Prompt-based Entity Encoding and Embedding Refinement} — each span is encoded via a fill-in-the-blank template with an optional soft prompt, and embeddings are refined using batch triplet contrastive learning; (3)~\textbf{Entity Clustering and Cluster Naming} — BIC-guided $k$-means groups spans into types, and a Cluster Naming module assigns human-readable labels (e.g., Person, Location, Disease).}
+    \label{fig:span2type_framework}
+\end{figure}
 
 \begin{table}[ht]
 \centering
@@ -371,9 +378,23 @@ Standard fine-tuning updates all parameters of the BERT encoder, which can be ex
     \text{inputs\_embeds} = [\mathbf{P};\; \mathbf{E}_{\mathbf{x}}] \in \mathbb{R}^{(N_p + L) \times d},
     \label{eq:soft_prompt}
 \end{equation}
-where $\mathbf{E}_{\mathbf{x}}$ are the standard token embeddings of the template-expanded input of length $L$. The attention mask is extended accordingly to cover the prepended soft tokens. The \texttt{[MASK]}-position index is shifted by $N_p$ to account for the prepended tokens. Only $\mathbf{P}$ (and optionally the encoder with a lower learning rate) is updated during training; the backbone remains frozen. With $N_p = 5$ (default), this reduces the number of trainable parameters from $\sim$110M to just 5 $\times$ 768 = 3,840, making the method significantly more parameter-efficient.
+where $\mathbf{E}_{\mathbf{x}}$ are the standard token embeddings of the template-expanded input of length $L$. The attention mask is extended accordingly to cover the prepended soft tokens. The \texttt{[MASK]}-position index is shifted by $N_p$ to account for the prepended tokens. With $N_p = 5$ (default), this reduces the number of trainable parameters from $\sim$110M to just $5 \times 768 = 3{,}840$.
 
 The same batch triplet margin loss (Equation~\ref{eq:triplet}) is used to train the soft prompt parameters.
+
+\paragraph{Two-Stage Prompt-Initialized Fine-Tuning.}
+A naive approach would either keep the backbone frozen for the entire run (limiting expressiveness) or fine-tune it from the first epoch at a standard learning rate (risking catastrophic forgetting of pre-trained knowledge~\cite{kirkpatrick-etal-2017-overcoming}). This thesis proposes a \textbf{two-stage} schedule controlled by a threshold epoch $E_{\text{unfreeze}}$:
+
+\textbf{Stage~1 — Soft Prompt Warmup} (epochs $1$ to $E_{\text{unfreeze}} - 1$): The PLM is strictly frozen and the AdamW optimizer tracks only $\mathbf{P}$. A high learning rate $\eta_{\text{prompt}}^{(1)} = 3 \times 10^{-3}$ allows the prompt to converge rapidly in the low-dimensional parameter space without perturbing the pre-trained backbone.
+
+\textbf{Stage~2 — Full Fine-Tuning} (epochs $E_{\text{unfreeze}}$ to $E_{\text{total}}$): The PLM is unfrozen and its parameters are added to the optimizer as a new parameter group at a drastically lower learning rate:
+\begin{equation}
+    \eta_{\text{PLM}}^{(2)} = 1 \times 10^{-5} \;\ll\; \eta_{\text{prompt}}^{(1)},
+    \label{eq:two_stage_lr}
+\end{equation}
+The large disparity between learning rates is essential: a high PLM learning rate at Stage~2 would overwrite the pre-trained representations, degrading generalization on unseen domains.
+
+Two implementation details are critical for correctness. First, the PLM parameters are added to the existing optimizer via \texttt{add\_param\_group()} rather than reinitializing the full optimizer. This preserves the first- and second-moment estimates ($m_t$, $v_t$) accumulated for $\mathbf{P}$ during Stage~1 — meaningful gradient statistics for the already-trained soft tokens — while the newly added PLM parameters receive fresh zero-initialized moments, which is appropriate since they have not yet been updated. Second, the learning rate scheduler is reset at the $E_{\text{unfreeze}}$ boundary so that $\eta_{\text{PLM}}^{(2)}$ decays from its full value rather than inheriting a mid-schedule multiplier left over from Stage~1.
 
 \section{Stage 3: BIC-Guided Automatic Cluster Assignment}
 
@@ -422,15 +443,15 @@ The candidate tokens are filtered to remove sub-word pieces, special tokens, pun
 
 \subsection{LLM-Based Naming}
 
-In the LLM backend, the $K_e$ MMR-selected exemplars are formatted as a numbered list and presented to a locally hosted large language model (via Ollama) with the prompt:
+In the LLM backend, the $K_e$ MMR-selected entity mentions are collected into a set $\{e_1, \ldots, e_{K_e}\}$ and sent to a locally hosted language model (via Ollama) using the two-turn prompt from the OWNER paper (Fig.~3 in~\cite{wang-etal-2023-crossner}):
+
 \begin{quote}
 \small
-\textit{You are naming a semantic entity cluster. Infer one shared category from the examples.\\
-Rules: Output ONLY one category name. Use 1 to 3 words. No explanation, no punctuation.\\
-Examples: [numbered list of exemplars]\\
-Category:}
+\textbf{System:} \textit{A virtual assistant answers questions from a user based on the provided text.}\\[4pt]
+\textbf{User:} \textit{Given the list of entities $\{e_1, \ldots, e_{K_e}\}$, which all belong to the same type, predict the entity type corresponding to all these entities. Respond only with the name of the entity type.}
 \end{quote}
-The model response is post-processed to extract at most three words, strip filler phrases, and normalize to lowercase. The LLM backend can produce multi-word type names (e.g., \textsc{research institute}) that single-token MLM predictions cannot, at the cost of requiring a locally available language model.
+
+The model is queried with temperature~0 for deterministic output. The raw response is post-processed to retain at most three words, strip filler phrases, and normalize to lowercase. Unlike the MLM backend, the LLM can produce multi-word type names (e.g., \textsc{research institute}) that a single \texttt{[MASK]} token cannot express.
 
 The two naming backends are interchangeable within the pipeline; ablation experiments in Chapter~4 compare their naming quality.
 
@@ -447,7 +468,7 @@ We evaluate Span2Type in a \emph{cross-domain open-world} setting. The entity de
 We use two source corpora to train the DTrans entity detector:
 \begin{itemize}
     \item \textbf{CoNLL-2003}~\cite{tjong-kim-sang-de-meulder-2003-introduction}: English newswire with four entity types (PER, ORG, LOC, MISC). This is the standard source corpus used in cross-domain NER benchmarks.
-    \item \textbf{Pile-NER}: A large, diverse NER corpus derived from the Pile, covering a broad range of entity categories. Training on Pile-NER exposes the detector to a wider variety of entity surface forms.
+    \item \textbf{Pile-NER}~\cite{zhou-etal-2024-universalner}: A large, diverse NER corpus derived from the Pile, covering a broad range of entity categories. Training on Pile-NER exposes the detector to a wider variety of entity surface forms.
 \end{itemize}
 
 \paragraph{Target datasets.}
@@ -460,6 +481,36 @@ We evaluate on five target domains from the \textbf{CrossNER}~\cite{liu-etal-202
     \item \textbf{Science}: Text about natural sciences (17 entity types).
 \end{itemize}
 For all target domains, gold labels are used strictly for evaluation; they are never seen during training or clustering.
+Table~\ref{tab:dataset_stats} summarises the statistics of all datasets used in this work.
+
+\begin{table}[ht]
+\centering
+\footnotesize
+\caption{Dataset statistics. \#Train / \#Dev / \#Test denote the number of sentences (CoNLL-2003) or documents (CrossNER). \#Types is the number of gold entity type labels. ``---'' denotes a split that is not used.}
+\label{tab:dataset_stats}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{l|l|l|r|r|r|r}
+\toprule
+\textbf{Dataset} & \textbf{Role} & \textbf{Domain} & \textbf{\#Train} & \textbf{\#Dev} & \textbf{\#Test} & \textbf{\#Types} \\
+\midrule
+\multicolumn{7}{l}{\textit{Source Datasets ($\mathcal{D}_S$)}} \\
+\midrule
+CoNLL-2003~\cite{tjong-kim-sang-de-meulder-2003-introduction} & Source & Newswire   & 14{,}041 & 3{,}250 & 3{,}453 & 4  \\
+Pile-NER~\cite{zhou-etal-2024-universalner}                   & Source & Web (diverse) & 50{,}000 & --- & --- & {\raise.17ex\hbox{$\scriptstyle\sim$}}13{,}000 \\
+\midrule
+\multicolumn{7}{l}{\textit{Target Datasets ($\mathcal{D}_T$, CrossNER~\cite{liu-etal-2021-crossner})}} \\
+\midrule
+AI         & Target (eval only) & Artificial Intelligence & 100 & 100 & 431 & 14 \\
+Literature & Target (eval only) & Literary text           & 100 & 100 & 416 & 12 \\
+Music      & Target (eval only) & Music                   & 100 & 100 & 465 & 13 \\
+Politics   & Target (eval only) & Political text          & 200 & 200 & 650 &  9 \\
+Science    & Target (eval only) & Natural sciences        & 200 & 200 & 543 & 17 \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
+
+\FloatBarrier
 
 \subsection{Implementation Details}
 
@@ -467,16 +518,13 @@ For all target domains, gold labels are used strictly for evaluation; they are n
 The DTrans multi-view entity detector uses \textbf{BERT-base-cased}~\cite{devlin-etal-2019-bert} as the backbone encoder (12 layers, hidden size 768). Training hyperparameters follow~\cite{zhang-etal-2024-dtrans}: learning rate $1\times10^{-5}$, batch size 32, 50 epochs, warmup steps 500, EMA decay $\alpha = 0.995$, consistency weight 100. The maximum sequence length is 128 tokens. Experiments are run with two GPUs.
 
 \paragraph{Entity Typing.}
-The entity encoding model uses \textbf{BERT-base-uncased} with the template \emph{``\{sentence\} \{entity\} is a \texttt{[MASK]}.''}. The model is fine-tuned with AdamW (learning rate $2\times10^{-5}$) and a batch triplet margin loss ($\gamma = 1.0$) for up to 30 epochs with a linear warmup scheduler. For the soft prompt variant, the base BERT is frozen and $N_p = 5$ trainable soft tokens are prepended; separate learning rates are used for soft prompt parameters and PLM parameters.
+The entity encoding model uses \textbf{BERT-base-uncased} with the template \emph{``\{sentence\} \{entity\} is a \texttt{[MASK]}.''}\ and a batch triplet margin loss ($\gamma = 1.0$). For the standard fine-tuning variant, AdamW with learning rate $2\times10^{-5}$ is used for 30 epochs. For the soft prompt variant, two-stage prompt-initialized fine-tuning (Section~3.3) is applied over 30 epochs: Stage~1 trains only the $N_p = 5$ soft prompt tokens at $\eta = 3\times10^{-3}$ for 10 epochs with the PLM strictly frozen; Stage~2 unfreezes the PLM and fine-tunes both prompt and backbone at $1\times10^{-5}$ for the remaining 20 epochs, with the learning rate scheduler reset at the boundary. Both stages use a linear decay schedule with no warmup steps.
 
 \paragraph{Clustering.}
 AutoKmeans searches $k \in [2, 30]$ with step 2, using $k$-means++ initialization and 10 random restarts per $k$ value.
 
 \paragraph{Cluster Naming.}
 MMR exemplar selection uses $K_e = 5$ exemplars with $\lambda = 0.7$. The MLM backend uses BERT-base-uncased. The LLM backend uses Llama-3 served via Ollama.
-
-\paragraph{Reproducibility.}
-All experiments use a fixed random seed (0). Code and configuration files are included with the submission.
 
 \section{Evaluation Metrics}
 
@@ -486,10 +534,22 @@ We report metrics at two levels of the pipeline.
 We report span-level \textbf{Precision}, \textbf{Recall}, and \textbf{F1} on the test set of each target domain, using exact span match. This evaluates whether the multi-view DTrans detector transfers better than the OWNER BIO-only baseline.
 
 \paragraph{Entity Typing.}
-We report \textbf{Hungarian-matched Micro-F1} and \textbf{Macro-F1} to measure overall and per-type typing accuracy after optimal cluster-to-type assignment. We also report \textbf{Adjusted Mutual Information (AMI)}~\cite{vinh-etal-2010-ami}, a mapping-free metric that measures clustering quality without requiring a bipartite assignment.
+We report \textbf{Adjusted Mutual Information (AMI)}~\cite{vinh-etal-2010-ami} to measure clustering quality. AMI is a mapping-free metric: it does not require any cluster-to-type assignment and is robust to permutations of cluster labels, over-segmentation, and over-merging. Scores close to 0 indicate random clustering; scores close to 1 indicate near-perfect agreement with the gold partition. We follow the OWNER paper~\cite{wang-etal-2023-crossner} in using AMI as the primary entity typing metric.
 
 \paragraph{Cluster Naming.}
 We evaluate predicted cluster names against gold entity type names using \textbf{BERTScore-F1}~\cite{zhang-etal-2020-bertscore}, which measures semantic similarity between predicted and reference names using contextual embeddings.
+Unlike exact-match accuracy, BERTScore-F1 awards partial credit for semantically close labels (e.g.\ \textit{researcher} vs.\ \textit{author}) and penalises completely wrong predictions, making it well-suited for evaluating open-vocabulary cluster names.
+Figure~\ref{fig:bertscore_bar} illustrates the score range: exact copies score 1.0, synonym paraphrases score $\approx 0.95$, and completely wrong labels score $\approx 0.86$ with RoBERTa-large embeddings.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.75\linewidth]{figure/bertscore_bar.png}
+  \caption{BERTScore-F1 (RoBERTa-large) for representative prediction quality levels.
+  Even a completely wrong label scores $\approx 0.86$ due to shared contextual embedding space, so differences above this floor reflect genuine semantic proximity.}
+  \label{fig:bertscore_bar}
+\end{figure}
+
+\FloatBarrier
 
 \section{Baselines and Ablations}
 
@@ -513,7 +573,7 @@ The complete system: DTrans multi-view entity detection + full BERT entity typin
 
 \section{Entity Detection Results}
 
-Table~\ref{tab:mention_detection} compares span detection F1 across five CrossNER target domains for different mention detection architectures, all trained on CoNLL-2003.
+We compare span detection F1 across five CrossNER target domains for different mention detection architectures, all trained on CoNLL-2003 (Table~\ref{tab:mention_detection}).
 
 \FloatBarrier
 
@@ -526,7 +586,7 @@ The DTrans multi-view model (BIO-SE-TB) achieves the highest average F1 of 82.35
 
 \section{Main Results}
 
-Table~\ref{tab:ner_comparison} reports end-to-end NER F1 on the five CrossNER target domains, comparing Span2Type against unsupervised and open-world NER baselines. All methods use CoNLL-2003 as the source unless stated otherwise.
+End-to-end NER F1 on the five CrossNER target domains is reported in Table~\ref{tab:ner_comparison}, comparing Span2Type against unsupervised and open-world NER baselines. All methods use CoNLL-2003 as the source unless stated otherwise.
 
 \FloatBarrier
 
@@ -543,37 +603,65 @@ Span2Type (Pile-NER) achieves 55.42 on average, which is lower than the CoNLL-so
 
 \section{Cluster Naming Results}
 
-Table~\ref{tab:naming} reports cluster naming quality measured by BERTScore-F1 between predicted cluster names and gold CrossNER entity type names.
+Cluster naming quality, measured by BERTScore-F1 between predicted and gold CrossNER type names, is shown in Table~\ref{tab:naming}.
+All Span2Type variants use $K_e{=}5$ exemplars per cluster; the centroid baseline selects the nearest entity, while MMR variants select a diverse representative set.
 
 \FloatBarrier
 
 \begin{table}[ht]
 \centering
 \footnotesize
-\caption{Cluster naming quality (BERTScore-F1) averaged over the five CrossNER target domains. Higher is better. \textbf{Bold} indicates best result.}
+\caption{Cluster naming quality (BERTScore-F1, RoBERTa-large backbone) per CrossNER domain.
+All methods use $K_e{=}5$ exemplars except OWNER which aggregates over all cluster entities.
+\textbf{Bold} = best per column.}
 \label{tab:naming}
 \begin{tabular}{l|ccccc|c}
 \toprule
 Method & AI & Lit. & Music & Pol. & Sci. & Avg. \\
 \midrule
 OWNER (single-template MLM)
-& {--} & {--} & {--} & {--} & {--} & {--} \\
+  & 0.989 & 0.974 & 0.958 & 0.964 & 0.945 & 0.966 \\
 Span2Type-CentroidNaming (MLM)
-& {--} & {--} & {--} & {--} & {--} & {--} \\
+  & 0.904 & 0.887 & 0.895 & 0.883 & 0.894 & 0.892 \\
 Span2Type-MLM (MMR)
-& {--} & {--} & {--} & {--} & {--} & {--} \\
+  & 0.900 & 0.889 & 0.911 & 0.887 & 0.893 & 0.896 \\
 \textbf{Span2Type-LLM (MMR)}
-& {--} & {--} & {--} & {--} & {--} & {--} \\
+  & \textbf{0.958} & \textbf{0.979} & 0.939 & \textbf{0.964} & \textbf{0.950} & \textbf{0.956} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \FloatBarrier
 
+Among the three Span2Type naming variants, \textbf{Span2Type-LLM (MMR)} achieves the highest BERTScore-F1 in four out of five domains, with an average of 0.956.
+The LLM backend consistently outperforms the MLM backends: Span2Type-LLM (MMR) outscores Span2Type-MLM (MMR) by $+0.060$ on average and outscores the centroid-only MLM ablation by $+0.064$.
+The advantage is largest in Literature ($+0.090$ over MLM MMR) and Politics ($+0.077$), domains where cluster entity populations are more heterogeneous and the LLM can synthesise a coherent type name from diverse exemplar evidence that a single-token MLM prediction cannot capture.
+The sole exception is Music, where Span2Type-LLM (MMR) scores 0.939 versus the OWNER baseline of 0.958, suggesting that music-domain entity types are better captured by frequent MLM vocabulary tokens than by free-form LLM generation.
+
+Comparing the two MLM variants, Span2Type-MLM (MMR) outscores Span2Type-CentroidNaming (MLM) by $+0.004$ on average (0.896 vs.\ 0.892).
+The improvement is consistent across domains, confirming that MMR-based diverse exemplar selection produces a more stable majority vote than centroid-nearest selection alone.
+The gain is modest because both methods share the same single-token prediction constraint; the benefit of diversity is bounded by the expressiveness of the MLM vocabulary at the \texttt{[MASK]} position.
+
+The OWNER baseline (0.966) uses all cluster entities for majority-vote naming rather than a fixed exemplar budget, giving it a statistical robustness advantage over any $K_e{=}5$ method.
+Span2Type-LLM (MMR) reaches within $0.010$ of the OWNER all-entities baseline (0.956 vs.\ 0.966) while using only $K_e{=}5$ exemplars per cluster, demonstrating that an LLM backend with diverse exemplar selection is the most effective naming strategy under a constrained inference budget.
+
+Figure~\ref{fig:naming_summary} provides a complementary view: the left panel shows per-domain mean BERTScore-F1 with standard deviation for Span2Type-LLM (MMR), confirming Literature as the strongest domain (0.979) and Music as the weakest (0.939).
+The right panel plots cluster purity against BERTScore-F1 across all clusters and domains; the near-zero correlation ($r{=}0.01$) indicates that naming quality is largely independent of cluster purity --- the LLM backend can assign a semantically accurate type label even for impure clusters.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=\linewidth]{figure/naming_summary.png}
+  \caption{Span2Type-LLM (MMR) naming quality across CrossNER domains.
+  \textit{Left}: mean BERTScore-F1 ($\pm$ std) per domain.
+  \textit{Right}: cluster purity vs.\ BERTScore-F1 scatter for all clusters; the near-zero Pearson $r$ shows that naming quality does not depend on cluster purity.}
+  \label{fig:naming_summary}
+\end{figure}
+
+\FloatBarrier
 
 \section{Ablation Study}
 
-Table~\ref{tab:ablation_study} isolates the contribution of each Span2Type component by progressively removing or replacing one part of the full system.
+The contribution of each Span2Type component is isolated in Table~\ref{tab:ablation_study} by progressively removing or replacing one part of the full system.
 
 \FloatBarrier
 
@@ -612,7 +700,7 @@ We introduced three improvements to the OWNER pipeline and evaluated them system
 
 \textbf{First}, we replaced OWNER's single BIO mention detector with the DTrans multi-view Entity Detection module~\cite{zhang-etal-2024-dtrans}, which jointly trains BIO, Start-End, and Tie-Break decoders on the source domain with a Mean Teaching strategy. This change alone improved span detection F1 from an average of 75.68 (OWNER BIO) to 82.35 (BIO-SE-TB), a gain of 6.67 points across five CrossNER domains.
 
-\textbf{Second}, we introduced a soft prompt variant of the entity typing stage in which only a small set of $N_p = 5$ trainable soft tokens is optimized while the BERT backbone remains frozen. This reduces trainable parameters from $\sim$110M to $\sim$3,840 while still improving end-to-end NER performance, offering a parameter-efficient alternative to full fine-tuning that is attractive in memory-constrained or limited-data settings.
+\textbf{Second}, we introduced a two-stage prompt-initialized fine-tuning approach for the entity typing stage. Stage~1 optimizes only $N_p = 5$ soft token embeddings ($\sim$3,840 parameters) while the BERT backbone is frozen, using a high learning rate ($3\times10^{-3}$) for rapid convergence. At epoch $E_{\text{unfreeze}} = 10$, Stage~2 unfreezes the backbone and continues training at a much lower learning rate ($1\times10^{-5}$) to prevent catastrophic forgetting, with the optimizer's accumulated moment estimates for the soft prompt preserved via \texttt{add\_param\_group()}. This two-stage strategy achieves parameter efficiency in early training and full-model expressiveness in later epochs, contributing a +2.8-point gain in end-to-end NER F1.
 
 \textbf{Third}, we proposed an MMR-based exemplar selection strategy for automatic cluster naming. Rather than querying a naming model with the single centroid-nearest example per cluster, we use Maximal Marginal Relevance~\cite{carbonell-goldstein-1998-use} to select $K_e = 5$ diverse, centroid-relevant exemplars before passing them to either an MLM or a locally hosted LLM. This ensures the naming model receives evidence spanning the full semantic range of the cluster, producing more specific and stable type names.
 

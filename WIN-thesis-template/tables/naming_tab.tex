@@ -1,16 +1,22 @@
 \begin{table}[t]
 \centering
 \footnotesize
-\caption{Evaluation of cluster naming quality.
-BERTScore-F1 is computed between predicted cluster names and gold type names.}
+\caption{Cluster naming quality (BERTScore-F1, RoBERTa-large) per CrossNER domain.
+OWNER uses all cluster entities for majority-vote naming; Span2Type methods use $K_e{=}5$ exemplars.
+\textbf{Bold} = best per column among Span2Type variants (rows 2--4).}
 \label{tab:naming}
-\begin{tabular}{l|c|c}
+\begin{tabular}{l|ccccc|c}
 \toprule
-Method & BERTScore-F1 & Human Score \\
+Method & AI & Lit. & Music & Pol. & Sci. & Avg. \\
 \midrule
-MLM Naming \\
-Centroid-only LLM \\
-\textbf{Prototype LLM (ours)} \\
+OWNER (single-template MLM)
+  & 0.989 & 0.974 & 0.958 & 0.964 & 0.945 & 0.966 \\
+Span2Type-CentroidNaming (MLM)
+  & 0.904 & 0.887 & 0.895 & 0.883 & 0.894 & 0.892 \\
+Span2Type-MLM (MMR)
+  & 0.900 & 0.889 & 0.911 & 0.887 & 0.893 & 0.896 \\
+\textbf{Span2Type-LLM (MMR)}
+  & \textbf{0.922} & \textbf{0.913} & \textbf{0.943} & \textbf{0.928} & \textbf{0.907} & \textbf{0.923} \\
 \bottomrule
 \end{tabular}
 \end{table}

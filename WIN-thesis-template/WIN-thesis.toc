@@ -8,68 +8,68 @@
 \contentsline {paragraph}{Challenge 3: The interpretability gap in unsupervised entity clustering.}{6}{section.1.1}%
 \contentsline {section}{\numberline {1.2}Contributions}{7}{section.1.2}%
 \contentsline {chapter}{\numberline {2}Related Work}{9}{chapter.2}%
-\contentsline {subsection}{\numberline {2.0.1}Supervised Named Entity Recognition}{9}{subsection.2.0.1}%
-\contentsline {subsection}{\numberline {2.0.2}Cross-domain and Low-resource NER}{10}{subsection.2.0.2}%
-\contentsline {subsection}{\numberline {2.0.3}Open-world and Unsupervised Entity Typing}{10}{subsection.2.0.3}%
-\contentsline {subsection}{\numberline {2.0.4}Fine-grained and Ultra-fine Entity Typing}{11}{subsection.2.0.4}%
-\contentsline {subsection}{\numberline {2.0.5}Clustering Methods for Entity Typing}{11}{subsection.2.0.5}%
-\contentsline {subsection}{\numberline {2.0.6}Masked Language Model Probing for Type Inference}{12}{subsection.2.0.6}%
-\contentsline {subsection}{\numberline {2.0.7}Parameter-Efficient Fine-Tuning and Soft Prompts}{12}{subsection.2.0.7}%
-\contentsline {subsection}{\numberline {2.0.8}Large Language Models for Cluster Labeling}{13}{subsection.2.0.8}%
-\contentsline {subsection}{\numberline {2.0.9}Maximal Marginal Relevance}{13}{subsection.2.0.9}%
-\contentsline {subsection}{\numberline {2.0.10}Positioning of This Work}{14}{subsection.2.0.10}%
+\contentsline {section}{\numberline {2.1}Supervised Named Entity Recognition}{9}{section.2.1}%
+\contentsline {section}{\numberline {2.2}Cross-domain and Low-resource NER}{9}{section.2.2}%
+\contentsline {section}{\numberline {2.3}Open-world and Unsupervised Entity Typing}{10}{section.2.3}%
+\contentsline {section}{\numberline {2.4}Fine-grained and Ultra-fine Entity Typing}{11}{section.2.4}%
+\contentsline {section}{\numberline {2.5}Clustering Methods for Entity Typing}{11}{section.2.5}%
+\contentsline {section}{\numberline {2.6}Masked Language Model Probing for Type Inference}{12}{section.2.6}%
+\contentsline {section}{\numberline {2.7}Parameter-Efficient Fine-Tuning and Soft Prompts}{12}{section.2.7}%
+\contentsline {section}{\numberline {2.8}Large Language Models for Cluster Labeling}{13}{section.2.8}%
+\contentsline {section}{\numberline {2.9}Maximal Marginal Relevance}{13}{section.2.9}%
+\contentsline {section}{\numberline {2.10}Positioning of This Work}{14}{section.2.10}%
 \contentsline {chapter}{\numberline {3}Methodology}{15}{chapter.3}%
 \contentsline {section}{\numberline {3.1}System Overview}{15}{section.3.1}%
-\contentsline {section}{\numberline {3.2}Stage 1: Multi-View Entity Detection}{16}{section.3.2}%
-\contentsline {subsection}{\numberline {3.2.1}Motivation}{16}{subsection.3.2.1}%
-\contentsline {subsection}{\numberline {3.2.2}Architecture}{17}{subsection.3.2.2}%
-\contentsline {paragraph}{BIO decoder.}{17}{subsection.3.2.2}%
-\contentsline {paragraph}{Start-End (SE) decoder.}{17}{equation.3.2.1}%
-\contentsline {paragraph}{Tie-Break (TB) decoder.}{18}{equation.3.2.2}%
-\contentsline {subsection}{\numberline {3.2.3}Training Objective}{18}{subsection.3.2.3}%
-\contentsline {subsection}{\numberline {3.2.4}Inference}{19}{subsection.3.2.4}%
-\contentsline {section}{\numberline {3.3}Stage 2: Entity Typing}{19}{section.3.3}%
-\contentsline {subsection}{\numberline {3.3.1}Fill-in-the-Blank Entity Representation}{19}{subsection.3.3.1}%
-\contentsline {subsection}{\numberline {3.3.2}Training with Batch Triplet Margin Loss}{20}{subsection.3.3.2}%
+\contentsline {section}{\numberline {3.2}Stage 1: Multi-View Entity Detection}{17}{section.3.2}%
+\contentsline {subsection}{\numberline {3.2.1}Motivation}{17}{subsection.3.2.1}%
+\contentsline {subsection}{\numberline {3.2.2}Architecture}{18}{subsection.3.2.2}%
+\contentsline {paragraph}{BIO decoder.}{18}{subsection.3.2.2}%
+\contentsline {paragraph}{Start-End (SE) decoder.}{18}{equation.3.2.1}%
+\contentsline {paragraph}{Tie-Break (TB) decoder.}{19}{equation.3.2.2}%
+\contentsline {subsection}{\numberline {3.2.3}Training Objective}{19}{subsection.3.2.3}%
+\contentsline {subsection}{\numberline {3.2.4}Inference}{20}{subsection.3.2.4}%
+\contentsline {section}{\numberline {3.3}Stage 2: Entity Typing}{20}{section.3.3}%
+\contentsline {subsection}{\numberline {3.3.1}Fill-in-the-Blank Entity Representation}{20}{subsection.3.3.1}%
+\contentsline {subsection}{\numberline {3.3.2}Training with Batch Triplet Margin Loss}{21}{subsection.3.3.2}%
 \contentsline {subsection}{\numberline {3.3.3}Soft Prompt Variant}{21}{subsection.3.3.3}%
-\contentsline {section}{\numberline {3.4}Stage 3: BIC-Guided Automatic Cluster Assignment}{22}{section.3.4}%
-\contentsline {subsection}{\numberline {3.4.1}AutoKmeans}{22}{subsection.3.4.1}%
-\contentsline {section}{\numberline {3.5}Stage 4: Automatic Cluster Naming}{23}{section.3.5}%
-\contentsline {subsection}{\numberline {3.5.1}MMR-Based Exemplar Selection}{23}{subsection.3.5.1}%
-\contentsline {subsection}{\numberline {3.5.2}MLM-Based Naming}{23}{subsection.3.5.2}%
-\contentsline {subsection}{\numberline {3.5.3}LLM-Based Naming}{24}{subsection.3.5.3}%
-\contentsline {chapter}{\numberline {4}Experiments and Results}{26}{chapter.4}%
-\contentsline {section}{\numberline {4.1}Experimental Setup}{26}{section.4.1}%
-\contentsline {subsection}{\numberline {4.1.1}Datasets}{26}{subsection.4.1.1}%
-\contentsline {paragraph}{Source datasets.}{26}{subsection.4.1.1}%
-\contentsline {paragraph}{Target datasets.}{27}{subsection.4.1.1}%
-\contentsline {subsection}{\numberline {4.1.2}Implementation Details}{27}{subsection.4.1.2}%
-\contentsline {paragraph}{Entity Detection.}{27}{subsection.4.1.2}%
-\contentsline {paragraph}{Entity Typing.}{27}{subsection.4.1.2}%
-\contentsline {paragraph}{Clustering.}{28}{subsection.4.1.2}%
-\contentsline {paragraph}{Cluster Naming.}{28}{subsection.4.1.2}%
-\contentsline {paragraph}{Reproducibility.}{28}{subsection.4.1.2}%
-\contentsline {section}{\numberline {4.2}Evaluation Metrics}{28}{section.4.2}%
-\contentsline {paragraph}{Entity Detection.}{28}{section.4.2}%
-\contentsline {paragraph}{Entity Typing.}{29}{section.4.2}%
-\contentsline {paragraph}{Cluster Naming.}{29}{section.4.2}%
-\contentsline {section}{\numberline {4.3}Baselines and Ablations}{29}{section.4.3}%
-\contentsline {paragraph}{OWNER (baseline).}{29}{section.4.3}%
-\contentsline {paragraph}{Span2Type-BIO.}{29}{section.4.3}%
-\contentsline {paragraph}{Span2Type-SoftPrompt.}{30}{section.4.3}%
-\contentsline {paragraph}{Span2Type-CentroidNaming.}{30}{section.4.3}%
-\contentsline {paragraph}{Span2Type-Full.}{30}{section.4.3}%
-\contentsline {section}{\numberline {4.4}Entity Detection Results}{30}{section.4.4}%
-\contentsline {section}{\numberline {4.5}Main Results}{32}{section.4.5}%
-\contentsline {section}{\numberline {4.6}Cluster Naming Results}{34}{section.4.6}%
-\contentsline {section}{\numberline {4.7}Ablation Study}{34}{section.4.7}%
-\contentsline {section}{\numberline {4.8}Discussion}{36}{section.4.8}%
-\contentsline {paragraph}{Effect of multi-view entity detection.}{36}{section.4.8}%
-\contentsline {paragraph}{End-to-end NER improvement.}{36}{section.4.8}%
-\contentsline {paragraph}{Effect of source corpus.}{36}{section.4.8}%
-\contentsline {paragraph}{Soft prompt tuning and ensemble detection.}{37}{section.4.8}%
-\contentsline {chapter}{\numberline {5}Conclusion}{38}{chapter.5}%
-\contentsline {section}{\numberline {5.1}Summary of Contributions}{38}{section.5.1}%
-\contentsline {section}{\numberline {5.2}Limitations}{39}{section.5.2}%
-\contentsline {section}{\numberline {5.3}Future Work}{40}{section.5.3}%
-\contentsline {chapter}{\textbf {Bibliography}}{41}{section.5.3}%
+\contentsline {paragraph}{Two-Stage Prompt-Initialized Fine-Tuning.}{22}{equation.3.3.9}%
+\contentsline {section}{\numberline {3.4}Stage 3: BIC-Guided Automatic Cluster Assignment}{23}{section.3.4}%
+\contentsline {subsection}{\numberline {3.4.1}AutoKmeans}{23}{subsection.3.4.1}%
+\contentsline {section}{\numberline {3.5}Stage 4: Automatic Cluster Naming}{24}{section.3.5}%
+\contentsline {subsection}{\numberline {3.5.1}MMR-Based Exemplar Selection}{24}{subsection.3.5.1}%
+\contentsline {subsection}{\numberline {3.5.2}MLM-Based Naming}{25}{subsection.3.5.2}%
+\contentsline {subsection}{\numberline {3.5.3}LLM-Based Naming}{25}{subsection.3.5.3}%
+\contentsline {chapter}{\numberline {4}Experiments and Results}{27}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Experimental Setup}{27}{section.4.1}%
+\contentsline {subsection}{\numberline {4.1.1}Datasets}{27}{subsection.4.1.1}%
+\contentsline {paragraph}{Source datasets.}{27}{subsection.4.1.1}%
+\contentsline {paragraph}{Target datasets.}{28}{subsection.4.1.1}%
+\contentsline {subsection}{\numberline {4.1.2}Implementation Details}{29}{subsection.4.1.2}%
+\contentsline {paragraph}{Entity Detection.}{29}{subsection.4.1.2}%
+\contentsline {paragraph}{Entity Typing.}{29}{subsection.4.1.2}%
+\contentsline {paragraph}{Clustering.}{30}{subsection.4.1.2}%
+\contentsline {paragraph}{Cluster Naming.}{30}{subsection.4.1.2}%
+\contentsline {section}{\numberline {4.2}Evaluation Metrics}{30}{section.4.2}%
+\contentsline {paragraph}{Entity Detection.}{30}{section.4.2}%
+\contentsline {paragraph}{Entity Typing.}{31}{section.4.2}%
+\contentsline {paragraph}{Cluster Naming.}{31}{section.4.2}%
+\contentsline {section}{\numberline {4.3}Baselines and Ablations}{32}{section.4.3}%
+\contentsline {paragraph}{OWNER (baseline).}{32}{section.4.3}%
+\contentsline {paragraph}{Span2Type-BIO.}{32}{section.4.3}%
+\contentsline {paragraph}{Span2Type-SoftPrompt.}{33}{section.4.3}%
+\contentsline {paragraph}{Span2Type-CentroidNaming.}{33}{section.4.3}%
+\contentsline {paragraph}{Span2Type-Full.}{33}{section.4.3}%
+\contentsline {section}{\numberline {4.4}Entity Detection Results}{33}{section.4.4}%
+\contentsline {section}{\numberline {4.5}Main Results}{35}{section.4.5}%
+\contentsline {section}{\numberline {4.6}Cluster Naming Results}{36}{section.4.6}%
+\contentsline {section}{\numberline {4.7}Ablation Study}{39}{section.4.7}%
+\contentsline {section}{\numberline {4.8}Discussion}{40}{section.4.8}%
+\contentsline {paragraph}{Effect of multi-view entity detection.}{40}{section.4.8}%
+\contentsline {paragraph}{End-to-end NER improvement.}{40}{section.4.8}%
+\contentsline {paragraph}{Effect of source corpus.}{40}{section.4.8}%
+\contentsline {paragraph}{Soft prompt tuning and ensemble detection.}{41}{section.4.8}%
+\contentsline {chapter}{\numberline {5}Conclusion}{42}{chapter.5}%
+\contentsline {section}{\numberline {5.1}Summary of Contributions}{42}{section.5.1}%
+\contentsline {section}{\numberline {5.2}Limitations}{43}{section.5.2}%
+\contentsline {section}{\numberline {5.3}Future Work}{44}{section.5.3}%
+\contentsline {chapter}{\textbf {Bibliography}}{46}{section.5.3}%
