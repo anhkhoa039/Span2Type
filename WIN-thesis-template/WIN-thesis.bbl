@@ -72,11 +72,6 @@ X.~Ma and E.~Hovy, ``End-to-end sequence labeling via bi-directional
   Association for Computational Linguistics (Volume 1: Long Papers)}, 2016, pp.
   1064--1074.
 
-\bibitem{vaswani-etal-2017-attention}
-A.~Vaswani, N.~Shazeer, N.~Parmar, J.~Uszkoreit, L.~Jones, A.~N. Gomez,
-  {\L}.~Kaiser, and I.~Polosukhin, ``Attention is all you need,'' in
-  \emph{Advances in Neural Information Processing Systems}, vol.~30, 2017.
-
 \bibitem{devlin-etal-2019-bert}
 J.~Devlin, M.-W. Chang, K.~Lee, and K.~Toutanova, ``{BERT}: Pre-training of
   deep bidirectional transformers for language understanding,'' in
@@ -88,18 +83,6 @@ J.~Devlin, M.-W. Chang, K.~Lee, and K.~Toutanova, ``{BERT}: Pre-training of
 Y.~Liu, M.~Ott, N.~Goyal, J.~Du, M.~Joshi, D.~Chen, O.~Levy, M.~Lewis,
   L.~Zettlemoyer, and V.~Stoyanov, ``{R}o{BERT}a: A robustly optimized {BERT}
   pretraining approach,'' \emph{arXiv preprint arXiv:1907.11692}, 2019.
-
-\bibitem{zhong-chen-2021-frustratingly}
-Z.~Zhong and D.~Chen, ``A frustratingly easy approach for entity and relation
-  extraction,'' in \emph{Proceedings of the 2021 Conference of the North
-  {A}merican Chapter of the Association for Computational Linguistics: Human
-  Language Technologies}, 2021, pp. 50--61.
-
-\bibitem{derczynski-etal-2017-results}
-L.~Derczynski, E.~Nichols, M.~van Erp, and N.~Limsopatham, ``Results of the
-  {WNUT}2017 shared task on novel and emerging entity recognition,'' in
-  \emph{Proceedings of the 3rd Workshop on Noisy User-generated Text}, 2017,
-  pp. 140--147.
 
 \bibitem{yang-katiyar-2020-simple}
 Y.~Yang and A.~Katiyar, ``Simple and effective few-shot named entity
@@ -113,6 +96,31 @@ J.~Ma, M.~Ballesteros, S.~Doss, R.~Anubhai, S.~Mallya, Y.~Al-Onaizan, and
   \emph{Findings of the Association for Computational Linguistics: {ACL} 2022},
   2022, pp. 171--181.
 
+\bibitem{wei-etal-2023-chatie}
+Z.~Wei, J.~Su, Y.~Wang, Y.~Tian, and Y.~Chang, ``Zero-shot named entity
+  recognition with large language models,'' in \emph{arXiv preprint
+  arXiv:2401.15303}, 2023.
+
+\bibitem{he-etal-2021-deberta}
+P.~He, X.~Liu, J.~Gao, and W.~Chen, ``{D}e{BERT}a: Decoding-enhanced {BERT}
+  with disentangled attention,'' in \emph{International Conference on Learning
+  Representations}, 2021.
+
+\bibitem{macqueen-1967-kmeans}
+J.~MacQueen, ``Some methods for classification and analysis of multivariate
+  observations,'' \emph{Proceedings of the Fifth Berkeley Symposium on
+  Mathematical Statistics and Probability}, vol.~1, pp. 281--297, 1967.
+
+\bibitem{schwarz-1978-bic}
+G.~Schwarz, ``Estimating the dimension of a model,'' \emph{The Annals of
+  Statistics}, vol.~6, no.~2, pp. 461--464, 1978.
+
+\bibitem{zhong-chen-2021-frustratingly}
+Z.~Zhong and D.~Chen, ``A frustratingly easy approach for entity and relation
+  extraction,'' in \emph{Proceedings of the 2021 Conference of the North
+  {A}merican Chapter of the Association for Computational Linguistics: Human
+  Language Technologies}, 2021, pp. 50--61.
+
 \bibitem{petroni-etal-2019-language}
 F.~Petroni, T.~Rockt{\"a}schel, S.~Riedel, P.~Lewis, A.~Bakhtin, Y.~Wu, and
   A.~Miller, ``Language models as knowledge bases?'' in \emph{Proceedings of
@@ -124,51 +132,6 @@ F.~Petroni, T.~Rockt{\"a}schel, S.~Riedel, P.~Lewis, A.~Bakhtin, Y.~Wu, and
 Z.~Jiang, F.~F. Xu, J.~Araki, and G.~Neubig, ``How can we know what language
   models know?'' in \emph{Transactions of the Association for Computational
   Linguistics}, vol.~8, 2020, pp. 423--438.
-
-\bibitem{li-etal-2023-gliner}
-U.~Zaratiana, N.~Tomeh, P.~Holat, and T.~Charnois, ``{GL}i{NER}: Generalist
-  model for named entity recognition using bidirectional transformer,'' in
-  \emph{Proceedings of the 2024 Conference of the North {A}merican Chapter of
-  the Association for Computational Linguistics}, 2024.
-
-\bibitem{wei-etal-2023-chatie}
-Z.~Wei, J.~Su, Y.~Wang, Y.~Tian, and Y.~Chang, ``Zero-shot named entity
-  recognition with large language models,'' in \emph{arXiv preprint
-  arXiv:2401.15303}, 2023.
-
-\bibitem{he-etal-2021-deberta}
-P.~He, X.~Liu, J.~Gao, and W.~Chen, ``{D}e{BERT}a: Decoding-enhanced {BERT}
-  with disentangled attention,'' in \emph{International Conference on Learning
-  Representations}, 2021.
-
-\bibitem{choi-etal-2018-ultra}
-E.~Choi, O.~Levy, Y.~Choi, and L.~Zettlemoyer, ``Ultra-fine entity typing,'' in
-  \emph{Proceedings of the 56th Annual Meeting of the Association for
-  Computational Linguistics (Volume 1: Long Papers)}, 2018, pp. 87--96.
-
-\bibitem{onoe-durrett-2020-interpretable}
-Y.~Onoe and G.~Durrett, ``Interpretable entity representations through
-  large-scale typing,'' in \emph{Findings of the Association for Computational
-  Linguistics: {EMNLP} 2020}, 2020, pp. 612--624.
-
-\bibitem{macqueen-1967-kmeans}
-J.~MacQueen, ``Some methods for classification and analysis of multivariate
-  observations,'' \emph{Proceedings of the Fifth Berkeley Symposium on
-  Mathematical Statistics and Probability}, vol.~1, pp. 281--297, 1967.
-
-\bibitem{arthur-vassilvitskii-2007-kmeanspp}
-D.~Arthur and S.~Vassilvitskii, ``{$k$-means++}: The advantages of careful
-  seeding,'' in \emph{Proceedings of the 18th Annual {ACM}-{SIAM} Symposium on
-  Discrete Algorithms}, 2007, pp. 1027--1035.
-
-\bibitem{schwarz-1978-bic}
-G.~Schwarz, ``Estimating the dimension of a model,'' \emph{The Annals of
-  Statistics}, vol.~6, no.~2, pp. 461--464, 1978.
-
-\bibitem{vinh-etal-2010-ami}
-N.~X. Vinh, J.~Epps, and J.~Bailey, ``Information theoretic measures for
-  clusterings comparison: Variants, properties, normalization and correction
-  for chance,'' vol.~11, 2010, pp. 2837--2854.
 
 \bibitem{li-liang-2021-prefix}
 X.~L. Li and P.~Liang, ``Prefix-tuning: Optimizing continuous prompts for
@@ -188,11 +151,6 @@ B.~Lester, R.~Al-Rfou, and N.~Constant, ``The power of scale for
   parameter-efficient prompt tuning,'' in \emph{Proceedings of the 2021
   Conference on Empirical Methods in Natural Language Processing}, 2021, pp.
   3045--3059.
-
-\bibitem{hu-etal-2022-lora}
-E.~J. Hu, Y.~Shen, P.~Wallis, Z.~Allen-Zhu, Y.~Li, S.~Wang, L.~Wang, and
-  W.~Chen, ``{LoRA}: Low-rank adaptation of large language models,'' in
-  \emph{International Conference on Learning Representations}, 2022.
 
 \bibitem{brown-etal-2020-language}
 T.~B. Brown, B.~Mann, N.~Ryder, M.~Subbiah, J.~Kaplan, P.~Dhariwal,
@@ -220,6 +178,11 @@ J.~Kirkpatrick, R.~Pascanu, N.~Rabinowitz, J.~Veness, G.~Desjardins, A.~A.
   C.~Clopath, D.~Kumaran, and R.~Hadsell, ``Overcoming catastrophic forgetting
   in neural networks,'' \emph{Proceedings of the National Academy of Sciences},
   vol. 114, no.~13, pp. 3521--3526, 2017.
+
+\bibitem{vinh-etal-2010-ami}
+N.~X. Vinh, J.~Epps, and J.~Bailey, ``Information theoretic measures for
+  clusterings comparison: Variants, properties, normalization and correction
+  for chance,'' vol.~11, 2010, pp. 2837--2854.
 
 \bibitem{zhang-etal-2020-bertscore}
 T.~Zhang, V.~Kishore, F.~Wu, K.~Q. Weinberger, and Y.~Artzi, ``{BERT}score:
