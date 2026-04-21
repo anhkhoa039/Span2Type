@@ -55,14 +55,22 @@
 \contentsline {section}{\numberline {4.4}Main Results}{31}{section.4.4}%
 \contentsline {section}{\numberline {4.5}Entity Detection Results}{33}{section.4.5}%
 \contentsline {section}{\numberline {4.6}Cluster Naming Results}{34}{section.4.6}%
-\contentsline {section}{\numberline {4.7}Ablation Study}{40}{section.4.7}%
-\contentsline {section}{\numberline {4.8}Discussion}{42}{section.4.8}%
-\contentsline {paragraph}{Effect of multi-view entity detection.}{42}{section.4.8}%
-\contentsline {paragraph}{End-to-end NER improvement.}{42}{section.4.8}%
-\contentsline {paragraph}{Effect of source corpus.}{43}{section.4.8}%
-\contentsline {paragraph}{Soft prompt tuning and ensemble detection.}{43}{section.4.8}%
-\contentsline {chapter}{\numberline {5}Conclusion}{44}{chapter.5}%
-\contentsline {section}{\numberline {5.1}Summary of Contributions}{44}{section.5.1}%
-\contentsline {section}{\numberline {5.2}Limitations}{45}{section.5.2}%
-\contentsline {section}{\numberline {5.3}Future Work}{46}{section.5.3}%
-\contentsline {chapter}{\textbf {Bibliography}}{48}{section.5.3}%
+\contentsline {paragraph}{LLM vs.\ MLM backend within Span2Type.}{36}{table.caption.10}%
+\contentsline {paragraph}{Span2Type-LLM vs.\ OWNER baselines.}{37}{table.caption.10}%
+\contentsline {paragraph}{MMR vs.\ centroid selection for MLM.}{37}{table.caption.10}%
+\contentsline {section}{\numberline {4.7}Ablation Study}{42}{section.4.7}%
+\contentsline {section}{\numberline {4.8}Discussion}{44}{section.4.8}%
+\contentsline {paragraph}{Per-domain patterns in entity detection.}{44}{section.4.8}%
+\contentsline {paragraph}{Why competing span detectors underperform.}{45}{section.4.8}%
+\contentsline {paragraph}{Cascade effect: detection quality improves end-to-end AMI.}{45}{section.4.8}%
+\contentsline {paragraph}{Why LLM prompting baselines underperform.}{46}{section.4.8}%
+\contentsline {paragraph}{Effect of source corpus on cross-domain transfer.}{47}{section.4.8}%
+\contentsline {paragraph}{Contribution of soft prompt tuning.}{47}{section.4.8}%
+\contentsline {paragraph}{LLM versus MLM naming: structural analysis.}{48}{section.4.8}%
+\contentsline {paragraph}{Why MMR helps LLM naming more than MLM.}{49}{section.4.8}%
+\contentsline {paragraph}{Error analysis and failure modes.}{50}{section.4.8}%
+\contentsline {chapter}{\numberline {5}Conclusion}{52}{chapter.5}%
+\contentsline {section}{\numberline {5.1}Summary of Contributions}{52}{section.5.1}%
+\contentsline {section}{\numberline {5.2}Limitations}{53}{section.5.2}%
+\contentsline {section}{\numberline {5.3}Future Work}{54}{section.5.3}%
+\contentsline {chapter}{\textbf {Bibliography}}{56}{section.5.3}%

@@ -1,0 +1,54 @@
+\contentsline {section}{\numberline {1}Introduction and Problem Statement}{3}{section.1}%
+\contentsline {subsection}{\numberline {1.1}Open-World NER}{3}{subsection.1.1}%
+\contentsline {subsection}{\numberline {1.2}The OWNER Framework (Baseline)}{3}{subsection.1.2}%
+\contentsline {subsection}{\numberline {1.3}Challenges Addressed by This Thesis}{3}{subsection.1.3}%
+\contentsline {paragraph}{Challenge 1 — Robust span detection across domains.}{3}{subsection.1.3}%
+\contentsline {paragraph}{Challenge 2 — Unknown and evolving entity type inventories.}{3}{subsection.1.3}%
+\contentsline {paragraph}{Challenge 3 — The interpretability gap in unsupervised clustering.}{4}{subsection.1.3}%
+\contentsline {section}{\numberline {2}Background and Related Work}{4}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Named Entity Recognition}{4}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}Pretrained Language Models and Cloze Templates}{4}{subsection.2.2}%
+\contentsline {subsection}{\numberline {2.3}Multi-View Span Detection}{4}{subsection.2.3}%
+\contentsline {subsection}{\numberline {2.4}Parameter-Efficient Fine-Tuning}{5}{subsection.2.4}%
+\contentsline {subsection}{\numberline {2.5}Automatic Cluster Naming and Exemplar Selection}{5}{subsection.2.5}%
+\contentsline {section}{\numberline {3}Methodology: The Span2Type Pipeline}{5}{section.3}%
+\contentsline {subsection}{\numberline {3.1}System Overview}{5}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}Stage 1: Multi-View Entity Detection}{6}{subsection.3.2}%
+\contentsline {paragraph}{Architecture.}{6}{subsection.3.2}%
+\contentsline {paragraph}{Training Objective.}{6}{equation.3.3}%
+\contentsline {paragraph}{Mean Teaching (EMA).}{6}{equation.3.4}%
+\contentsline {paragraph}{Inference.}{6}{equation.3.5}%
+\contentsline {subsection}{\numberline {3.3}Stage 2: Entity Typing with Soft Prompts}{6}{subsection.3.3}%
+\contentsline {paragraph}{Fill-in-the-Blank Entity Representation.}{6}{subsection.3.3}%
+\contentsline {paragraph}{Batch Triplet Margin Loss.}{7}{equation.3.7}%
+\contentsline {paragraph}{Soft Prompt Variant.}{7}{equation.3.8}%
+\contentsline {paragraph}{Two-Stage Prompt-Initialized Fine-Tuning.}{7}{equation.3.9}%
+\contentsline {paragraph}{BIC-Guided Cluster Assignment.}{7}{equation.3.9}%
+\contentsline {subsection}{\numberline {3.4}Stage 3: Automatic Cluster Naming via MMR}{7}{subsection.3.4}%
+\contentsline {paragraph}{MMR-Based Exemplar Selection.}{7}{subsection.3.4}%
+\contentsline {paragraph}{MLM-Based Naming.}{8}{equation.3.11}%
+\contentsline {paragraph}{LLM-Based Naming.}{8}{equation.3.12}%
+\contentsline {section}{\numberline {4}Experimental Setup}{8}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Datasets}{8}{subsection.4.1}%
+\contentsline {paragraph}{Source Datasets.}{8}{subsection.4.1}%
+\contentsline {paragraph}{Target Datasets (CrossNER).}{8}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Implementation Details}{9}{subsection.4.2}%
+\contentsline {subsection}{\numberline {4.3}Evaluation Metrics}{9}{subsection.4.3}%
+\contentsline {section}{\numberline {5}Results}{9}{section.5}%
+\contentsline {subsection}{\numberline {5.1}End-to-End NER Results (AMI)}{9}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}Entity Detection Results}{10}{subsection.5.2}%
+\contentsline {subsection}{\numberline {5.3}Cluster Naming Results}{11}{subsection.5.3}%
+\contentsline {subsection}{\numberline {5.4}Ablation Study}{11}{subsection.5.4}%
+\contentsline {section}{\numberline {6}Qualitative Analysis}{11}{section.6}%
+\contentsline {subsection}{\numberline {6.1}Naming Examples per CrossNER Domain}{11}{subsection.6.1}%
+\contentsline {subsection}{\numberline {6.2}Literature Domain: Per-Cluster Naming Breakdown}{12}{subsection.6.2}%
+\contentsline {section}{\numberline {7}Discussion}{13}{section.7}%
+\contentsline {subsection}{\numberline {7.1}Cascade Effect: Detection Quality Amplifies End-to-End Gain}{13}{subsection.7.1}%
+\contentsline {subsection}{\numberline {7.2}Source Corpus Alignment}{13}{subsection.7.2}%
+\contentsline {subsection}{\numberline {7.3}Why LLM Naming Helps More Than MLM}{13}{subsection.7.3}%
+\contentsline {subsection}{\numberline {7.4}Failure Modes}{13}{subsection.7.4}%
+\contentsline {section}{\numberline {8}Conclusion}{13}{section.8}%
+\contentsline {subsection}{\numberline {8.1}Summary of Contributions}{13}{subsection.8.1}%
+\contentsline {subsection}{\numberline {8.2}Limitations}{14}{subsection.8.2}%
+\contentsline {subsection}{\numberline {8.3}Future Work}{14}{subsection.8.3}%
+\contentsline {section}{References}{14}{subsection.8.3}%

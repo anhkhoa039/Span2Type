@@ -2,7 +2,7 @@
 \centering
 \footnotesize
 \caption{Cluster naming quality (BERTScore-F1, RoBERTa-large) per CrossNER domain.
-OWNER uses all cluster entities for majority-vote naming; Span2Type methods use $n{=}16$ exemplars.
+OWNER (single-template MLM) uses all cluster entities; OWNER (LLM) and all Span2Type variants use $n{=}16$ entities per cluster (random selection for OWNER (LLM); centroid-nearest or MMR-selected for Span2Type).
 \textbf{Bold} = best per column.}
 \label{tab:naming}
 \begin{tabular}{l|ccccc|c}
