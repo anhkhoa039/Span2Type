@@ -1,3 +1,11 @@
+# Claude / ClaudeKit
+.claude/
+.opencode/
+AGENTS.md
+plans/
+release-manifest.json
+.repomixignore
+
 mlruns/
 mlartifacts/
 .vscode/

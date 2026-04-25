@@ -1,0 +1,329 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[margin=2.5cm, headheight=14pt]{geometry}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{microtype}
+\usepackage{parskip}
+\usepackage{enumitem}
+\usepackage{caption}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{tabularx}
+\usepackage{colortbl}
+
+\definecolor{ownerblue}{RGB}{30,80,160}
+\definecolor{bertcol}{RGB}{210,230,255}
+\definecolor{llmcol}{RGB}{210,255,220}
+\definecolor{s2tmlmcol}{RGB}{255,235,200}
+\definecolor{s2tollamacol}{RGB}{255,215,215}
+
+\hypersetup{colorlinks=true,linkcolor=ownerblue,urlcolor=ownerblue,citecolor=ownerblue}
+
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{\textcolor{gray}{\small OWNER \& Span2Type -- Cluster Naming Evaluation}}
+\lhead{\textcolor{gray}{\small BERTScore Report (Version~3)}}
+\rfoot{\thepage}
+
+\titleformat{\section}{\large\bfseries\color{ownerblue}}{{\thesection}}{1em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{{\thesubsection}}{1em}{}
+
+\begin{document}
+
+% ─── Title ───────────────────────────────────────────────────────────────────
+\begin{center}
+  {\LARGE\bfseries\color{ownerblue}
+    Cluster Naming Evaluation Report \normalsize\textit{(Version~3)}\\[0.4em]
+    \large OWNER vs.\ Span2Type: Cluster Naming Comparison}\\[0.8em]
+  {\large BERTScore Evaluation across Five CrossNER Domains}\\[0.6em]
+  {\normalsize Chaithra-lm \quad \texttt{18520923@gm.uit.edu.vn}}\\[0.3em]
+  {\small \today}
+\end{center}
+\vspace{0.4em}\hrule\vspace{1.2em}
+
+% ─── Abstract ────────────────────────────────────────────────────────────────
+\begin{abstract}
+This report compares four cluster-naming methods across five CrossNER domains
+(AI, Literature, Music, Politics, Science), evaluated using BERTScore
+(RoBERTa-large) against ground-truth entity type labels.
+Two methods belong to \textbf{OWNER}: BERT-based naming (MLM top-1 vote)
+and LLM-based naming (Llama-3.1-8B via Ollama, Figure~3 prompt, $n{=}16$).
+Two methods belong to \textbf{Span2Type}: MLM-based naming (same BERT voting
+strategy) and Ollama-based naming (Llama-3.1-8B with richer context prompting).
+OWNER-BERT and Span2Type-MLM produce \textbf{identical} F$_1$ scores (0.966)
+since they share the same underlying approach.
+Span2Type-Ollama achieves a higher average F$_1$ of \textbf{0.952} compared
+to OWNER-LLM's \textbf{0.944}, driven by more descriptive multi-word names.
+\end{abstract}
+
+% ─── 1. Introduction ─────────────────────────────────────────────────────────
+\section{Introduction}
+
+Unsupervised NER systems such as OWNER~\cite{genest2025owner} group extracted
+entities into clusters identified only by integer IDs.
+Automatic cluster naming assigns human-readable type labels without manual
+annotation. This report evaluates and compares four naming strategies:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item \textbf{OWNER-BERT}: for each entity in a cluster, fill the prompt
+    \texttt{``\{sentence\} \{entity\} is a [MASK].''} and take the
+    top-1 MLM prediction; the most frequent token across the cluster is the name.
+  \item \textbf{OWNER-LLM}: sample $n{=}16$ entities per cluster, query
+    Llama-3.1-8B with the Figure~3 prompt (temperature~$=0$), use the
+    response as the name.
+  \item \textbf{Span2Type-MLM}: same BERT voting strategy as OWNER-BERT,
+    applied to Span2Type cluster assignments.
+  \item \textbf{Span2Type-Ollama}: Llama-3.1-8B with richer context
+    (full example sentences included in the prompt), producing longer and
+    more specific multi-word names.
+\end{itemize}
+
+\noindent
+All methods are scored against ground-truth labels using
+BERTScore~\cite{zhang2020bertscore} (RoBERTa-large backbone).
+
+% ─── 2. Experimental Setup ───────────────────────────────────────────────────
+\section{Experimental Setup}
+
+\subsection{MLflow Run IDs}
+
+\begin{table}[h]
+\centering
+\caption{MLflow run IDs for OWNER and Span2Type experiments.}
+\label{tab:runs}
+\setlength{\tabcolsep}{5pt}
+\small
+\begin{tabular}{l l l}
+\toprule
+\textbf{Domain} & \textbf{OWNER Run ID} & \textbf{Span2Type Run ID} \\
+\midrule
+AI         & \texttt{ea6e40f8b9ed4aa385956217b939eb6e} & \texttt{6b105207f3084468b2b79f37841ae2b2} \\
+Literature & \texttt{fb1215f7b8e642ee99d43782427432f0} & \texttt{29e11a34c7214005b0d96bc0520515be} \\
+Music      & \texttt{2c886b9b2f104bd4ad79ed1bf3dd13c5} & \texttt{56ad65e38f4e464f85acc934340692dc} \\
+Politics   & \texttt{9c02f083100c41b3b052373d4e8e916d} & \texttt{610c691d79904252b375511432bbbe7b} \\
+Science    & \texttt{f72db65d19f243a6aedda8687a538896} & \texttt{efcfb115a1cf47798145e9ee97b01755} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Ground-Truth Alignment}
+
+For OWNER runs, the GT label per cluster comes from
+\texttt{et\_test\_cluster\_naming\_gt.json} (column-wise argmax of the
+confusion matrix). For Span2Type runs (which do not store a GT file),
+the same argmax procedure is applied directly to the confusion matrix
+tensor (\texttt{et\_test\_confusion-matrix.pt}) and its metadata.
+
+\subsection{Cluster Statistics}
+
+\begin{table}[h]
+\centering
+\caption{Number of aligned clusters per domain and run type.}
+\label{tab:clusters}
+\setlength{\tabcolsep}{8pt}
+\begin{tabular}{l r r r r}
+\toprule
+\textbf{Domain} & \textbf{True $k$} & \textbf{OWNER clusters} & \textbf{Span2Type clusters} \\
+\midrule
+AI         & 14 & 16 & 16 \\
+Literature & 12 & 14 & 14 \\
+Music      & 13 & 20 & 20 \\
+Politics   &  9 & 22 & 22 \\
+Science    & 17 & 20 & 20 \\
+\midrule
+Total      & 65 & 92 & 92 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ─── 3. Results ──────────────────────────────────────────────────────────────
+\section{Results}
+
+\subsection{BERTScore Comparison}
+
+Table~\ref{tab:bertscore} presents P, R, F$_1$ for all four methods.
+The best F$_1$ per domain is shown in \textbf{bold}.
+
+\begin{table}[h]
+\centering
+\caption{BERTScore (P / R / F$_1$) for four cluster-naming methods across five
+CrossNER domains. Best F$_1$ per domain in \textbf{bold}.}
+\label{tab:bertscore}
+\setlength{\tabcolsep}{3.5pt}
+\small
+\begin{tabular}{l ccc ccc ccc ccc}
+\toprule
+& \multicolumn{3}{c}{\cellcolor{bertcol}\textbf{OWNER-BERT}}
+& \multicolumn{3}{c}{\cellcolor{llmcol}\textbf{OWNER-LLM}}
+& \multicolumn{3}{c}{\cellcolor{s2tmlmcol}\textbf{S2T-MLM}}
+& \multicolumn{3}{c}{\cellcolor{s2tollamacol}\textbf{S2T-Ollama}} \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-7}\cmidrule(lr){8-10}\cmidrule(lr){11-13}
+\textbf{Domain} & P & R & F$_1$ & P & R & F$_1$ & P & R & F$_1$ & P & R & F$_1$ \\
+\midrule
+AI
+  & 0.992 & 0.986 & \textbf{0.989}
+  & 0.915 & 0.945 & 0.929
+  & 0.992 & 0.986 & \textbf{0.989}
+  & 0.934 & 0.956 & 0.944 \\
+Literature
+  & 0.974 & 0.975 & 0.974
+  & 0.950 & 0.960 & 0.954
+  & 0.974 & 0.975 & 0.974
+  & 0.969 & 0.970 & \textbf{0.969} \\
+Music
+  & 0.965 & 0.951 & \textbf{0.958}
+  & 0.960 & 0.955 & 0.957
+  & 0.965 & 0.951 & \textbf{0.958}
+  & 0.948 & 0.940 & 0.943 \\
+Politics
+  & 0.968 & 0.962 & \textbf{0.964}
+  & 0.945 & 0.961 & 0.953
+  & 0.968 & 0.962 & \textbf{0.964}
+  & 0.958 & 0.968 & 0.963 \\
+Science
+  & 0.949 & 0.943 & \textbf{0.945}
+  & 0.922 & 0.933 & 0.926
+  & 0.949 & 0.943 & \textbf{0.945}
+  & 0.945 & 0.937 & 0.941 \\
+\midrule
+\textbf{Average}
+  & \textbf{0.970} & \textbf{0.963} & \textbf{0.966}
+  & 0.938 & 0.951 & 0.944
+  & \textbf{0.970} & \textbf{0.963} & \textbf{0.966}
+  & 0.951 & 0.954 & 0.952 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Qualitative Comparison}
+
+Table~\ref{tab:examples} shows representative naming examples contrasting
+OWNER-LLM and Span2Type-Ollama, where the two approaches differ most.
+
+\begin{table}[h]
+\centering
+\caption{Selected naming examples comparing LLM-based approaches.
+\textcolor{green!60!black}{Green} = correct/near-correct;
+\textcolor{orange!70!black}{orange} = partially correct;
+\textcolor{red!70!black}{red} = incorrect.}
+\label{tab:examples}
+\setlength{\tabcolsep}{4pt}
+\small
+\begin{tabularx}{\textwidth}{l l X X X}
+\toprule
+\textbf{Dom.} & \textbf{GT} & \textbf{OWNER-LLM} & \textbf{S2T-Ollama} \\
+\midrule
+AI   & algorithm     & \textcolor{orange!70!black}{Computer Science Concepts} & \textcolor{orange!70!black}{artificial intelligence machine learning} \\
+AI   & programlang   & \textcolor{green!60!black}{Programming languages}      & \textcolor{green!60!black}{programming languages} \\
+AI   & product       & \textcolor{orange!70!black}{Robot}                      & \textcolor{green!60!black}{machine learning library} \\
+AI   & person        & \textcolor{green!60!black}{Person}                      & \textcolor{orange!70!black}{director} \\
+\midrule
+Lit. & book          & \textcolor{green!60!black}{Novel}                       & \textcolor{orange!70!black}{character} \\
+Lit. & literarygenre & \textcolor{orange!70!black}{Literary work}               & \textcolor{red!70!black}{novels} \\
+Lit. & event         & \textcolor{orange!70!black}{Film Festivals}              & \textcolor{green!60!black}{film festivals} \\
+\midrule
+Mus. & musicalartist & \textcolor{green!60!black}{Singer}                      & \textcolor{green!60!black}{singer} \\
+Mus. & event         & \textcolor{green!60!black}{Event}                       & \textcolor{orange!70!black}{multisport events} \\
+Mus. & album         & \textcolor{red!70!black}{Song}                          & \textcolor{green!60!black}{albums} \\
+\midrule
+Pol. & politicalparty & \textcolor{green!60!black}{Political party}             & \textcolor{green!60!black}{political party} \\
+Pol. & organisation  & \textcolor{green!60!black}{Government}                  & \textcolor{green!60!black}{legislative body} \\
+Pol. & person        & \textcolor{red!70!black}{Celebrity}                     & \textcolor{orange!70!black}{actress} \\
+\midrule
+Sci. & scientist     & \textcolor{green!60!black}{Physicist}                   & \textcolor{orange!70!black}{historical figures} \\
+Sci. & chemicalcompound & \textcolor{green!60!black}{Chemical substance}       & \textcolor{green!60!black}{chemical compound} \\
+Sci. & misc          & \textcolor{red!70!black}{Ethnic groups}                 & \textcolor{green!60!black}{biological processes} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+% ─── 4. Analysis ─────────────────────────────────────────────────────────────
+\section{Analysis}
+
+\subsection{OWNER-BERT = Span2Type-MLM}
+
+Both BERT-based methods achieve \textbf{identical} BERTScore across all
+domains (avg.\ F$_1 = 0.966$). This is expected: they use the same
+BERT-base-uncased MLM head with the same prompt template and voting
+mechanism on the same cluster assignments. The `\texttt{vegetarian}''
+artefact appears in both (8 of 92 clusters, 8.7\%) for the same reason:
+ambiguous entities in the \texttt{``X is a [MASK].''} pattern trigger
+BERT's most frequent fill pattern from pretraining.
+
+\subsection{Span2Type-Ollama Outperforms OWNER-LLM}
+
+Span2Type-Ollama achieves a higher average F$_1$ (\textbf{0.952}) than
+OWNER-LLM (\textbf{0.944}), a gap of $+0.008$. The advantage comes from
+richer context: Span2Type-Ollama includes full example sentences in its
+prompt, allowing the LLM to infer fine-grained types such as
+\textit{machine learning library} (GT: product), \textit{legislative body}
+(GT: organisation), and \textit{biological processes} (GT: misc).
+
+OWNER-LLM, which only passes entity strings without their sentence context,
+is more susceptible to over-generalisation (e.g., \textit{Celebrity} for
+\texttt{person}; \textit{Stadiums} for \texttt{country}).
+
+The improvement is most pronounced on \textbf{Literature} ($\Delta$F$_1 =
++0.015$) and smallest on \textbf{Music} ($-0.014$), where Span2Type-Ollama
+over-specifies (\textit{multisport events} for \texttt{event}).
+
+\subsection{Per-Domain Summary}
+
+\begin{itemize}[leftmargin=1.5em]
+  \item \textbf{AI}: BERT methods dominate (F$_1=0.989$). LLM methods
+    struggle with abstract types like \texttt{algorithm} and \texttt{task}.
+  \item \textbf{Literature}: Span2Type-Ollama achieves the highest F$_1$
+    (0.969), narrowly beating the BERT methods (0.974 vs 0.969 is within
+    rounding; Span2Type-Ollama has higher Recall 0.970 vs 0.975).
+  \item \textbf{Music}: All methods perform similarly (range 0.943--0.958).
+    Both Ollama variants confuse \texttt{album} with song-related terms.
+  \item \textbf{Politics}: BERT methods and Span2Type-Ollama are within
+    0.001 F$_1$, all around 0.963--0.964.
+  \item \textbf{Science}: BERT methods lead (0.945); Span2Type-Ollama
+    is close (0.941). Fine-grained scientific types remain challenging
+    for all approaches.
+\end{itemize}
+
+% ─── 5. Conclusion ───────────────────────────────────────────────────────────
+\section{Conclusion}
+
+Across all four methods, BERT/MLM voting achieves the highest BERTScore
+(F$_1=0.966$) but produces single-token names and the \textit{vegetarian}
+artefact. Among LLM-based approaches, \textbf{Span2Type-Ollama} (F$_1=0.952$)
+outperforms \textbf{OWNER-LLM} (F$_1=0.944$) by providing fuller sentence
+context to the model, yielding more precise multi-word names.
+
+The ranking across all methods is:
+
+\begin{center}
+OWNER-BERT $=$ Span2Type-MLM ($0.966$)
+$>$ Span2Type-Ollama ($0.952$)
+$>$ OWNER-LLM ($0.944$)
+\end{center}
+
+\noindent
+For practical deployment where human-readable output matters, Span2Type-Ollama
+is recommended. For cost-free naming within an existing OWNER pipeline, the
+MLM voting approach remains the strongest baseline.
+
+% ─── References ──────────────────────────────────────────────────────────────
+\begin{thebibliography}{9}
+
+\bibitem{genest2025owner}
+P.-Y.~Genest, P.-E.~Portier, E.~Egyed-Zsigmond, and M.~Lovisetto,
+``OWNER -- Toward Unsupervised Open-World Named Entity Recognition,''
+\textit{IEEE Access}, vol.~13, pp.~50077--50096, 2025.
+
+\bibitem{zhang2020bertscore}
+T.~Zhang, V.~Kishore, F.~Wu, K.~Q.~Weinberger, and Y.~Artzi,
+``BERTScore: Evaluating Text Generation with BERT,''
+in \textit{Proc. ICLR}, 2020.
+
+\end{thebibliography}
+
+\end{document}

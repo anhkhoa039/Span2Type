@@ -152,18 +152,21 @@ def generate_cluster_name_map_with_mlm(
     sentence_texts: Sequence[str],
     entity_texts: Sequence[str],
     plm_name: str,
-    num_exemplars: int = 16,
+    num_exemplars: int | None = 16,
     mmr_lambda: float = 0.7,
     naming_template: str = "{sentence} {entity} is a [MASK].",
     naming_templates: Sequence[str] | None = None,
     use_mmr: bool = True,
+    topk_vote: int = 1,
     seed: int | None = None,
     save_path: str | None = None,
 ) -> Dict[int, Dict[str, Any]]:
     """Generate one label token per cluster via MLM consensus with exemplar logging.
 
     Uses the OWNER paper prompt (Eq. 2): '{sentence} {entity} is a [MASK].'
+    num_exemplars=None uses all entities in the cluster (replicates OWNER paper setting).
     use_mmr=True selects diverse exemplars via MMR; False uses random sampling.
+    topk_vote>1 aggregates top-k probability-weighted votes instead of hard top-1.
     Results are saved to save_path as JSON if provided.
     """
     if entity_embeddings.ndim != 2:
@@ -210,7 +213,15 @@ def generate_cluster_name_map_with_mlm(
             }
             continue
 
-        if use_mmr:
+        if num_exemplars is None:
+            # Use all cluster entities — replicates the original OWNER paper setting.
+            exemplar_pairs = list(zip(cluster_entity_texts, cluster_sentence_texts))
+            exemplars = [
+                template.format(sentence=sentence, entity=entity).replace("[MASK]", mask_token)
+                for entity, sentence in exemplar_pairs
+                for template in templates
+            ]
+        elif use_mmr:
             exemplars, exemplar_pairs = _build_cluster_exemplar_prompts(
                 cluster_emb=cluster_emb,
                 cluster_sentence_texts=cluster_sentence_texts,
@@ -268,18 +279,21 @@ def generate_cluster_name_map_with_mlm(
         tok_idx = mask_positions[:, 1]
         mask_probs = probs[batch_idx, tok_idx, :]  # [B, V]
 
-        # Each exemplar votes for its top valid predicted token (most frequent wins).
-        vote_counts: Dict[str, int] = {}
+        # Each exemplar contributes probability-weighted votes for its top-k valid tokens.
+        vote_scores: Dict[str, float] = {}
         for i in range(mask_probs.shape[0]):
+            collected = 0
             for tok_id in torch.argsort(mask_probs[i], descending=True).tolist():
                 tok = tokenizer.convert_ids_to_tokens(int(tok_id))
                 if _is_good_label_token(tok):
-                    vote_counts[tok] = vote_counts.get(tok, 0) + 1
-                    break
+                    vote_scores[tok] = vote_scores.get(tok, 0.0) + mask_probs[i][int(tok_id)].item()
+                    collected += 1
+                    if collected >= topk_vote:
+                        break
 
-        top_candidates: List[Dict[str, int | str]] = sorted(
-            [{"token": tok, "votes": count} for tok, count in vote_counts.items()],
-            key=lambda x: x["votes"],
+        top_candidates: List[Dict[str, float | str]] = sorted(
+            [{"token": tok, "score": round(score, 4)} for tok, score in vote_scores.items()],
+            key=lambda x: x["score"],
             reverse=True,
         )[:5]
 

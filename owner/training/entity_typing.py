@@ -327,13 +327,15 @@ class EntityTypingTrainer(BaseTrainer):
                             sentence_texts=sentence_texts,
                             entity_texts=entity_texts,
                             plm_name=et_config.get('mlm_plm_name', et_config['plm_name']),
-                            num_exemplars=et_config.get('cluster_name_num_exemplars', 16),
+                            num_exemplars=None if et_config.get('cluster_name_num_exemplars', 16) == -1 else et_config.get('cluster_name_num_exemplars', 16),
                             use_mmr=et_config.get('cluster_name_mlm_use_mmr', True),
                             mmr_lambda=et_config.get('cluster_name_mmr_lambda', 0.7),
                             naming_template=et_config.get(
                                 'cluster_name_prompt_template',
                                 "{sentence} {entity} is a [MASK].",
                             ),
+                            naming_templates=et_config.get('cluster_name_prompt_templates', None),
+                            topk_vote=et_config.get('cluster_name_topk_vote', 1),
                             seed=et_config.get('cluster_name_seed', None),
                         )
                     all_name_maps[backend] = backend_map

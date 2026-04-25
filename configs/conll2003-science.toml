@@ -30,17 +30,25 @@ k_step = 2
 
 generate_cluster_names = true
 mlm_plm_name = "bert-base-uncased"
-cluster_name_backends = ["mlm", "ollama"]   # run both; or use a single string "mlm" | "ollama"
+cluster_name_backends = ["mlm"]   # mlm only; set to ["mlm", "ollama"] to enable LLM backend
 ollama_model_name = "llama3"
 cluster_name_max_words = 3
 
-# Paper (Eq. 2) template — used when cluster_name_backend = "mlm"
+# Multi-template voting: 4 templates for diverse BERT predictions
 cluster_name_prompt_template = "{sentence} {entity} is a [MASK]."
+cluster_name_prompt_templates = [
+    "{sentence} {entity} is a [MASK].",
+    "{entity} is a [MASK].",
+    "[MASK] such as {entity}",
+    "In this context, {entity} is a [MASK].",
+]
+cluster_name_topk_vote = 3   # soft top-k probability aggregation (1 = OWNER hard vote)
 
-# Exemplar selection: MMR (use_mmr=true) or random sampling (use_mmr=false, paper baseline)
-cluster_name_use_mmr = true
+# Exemplar selection per backend (paper baseline = no MMR for either)
+cluster_name_mlm_use_mmr = false    # no MMR: uses all entities (num_exemplars=-1 overrides selection)
+cluster_name_ollama_use_mmr = true  # MMR for LLM: diverse exemplars from n_samples
 cluster_name_mmr_lambda = 0.7
-cluster_name_num_exemplars = 16   # for mlm backend (MMR or random)
+cluster_name_num_exemplars = -1     # -1 = use all cluster entities (replicates OWNER paper setting)
 cluster_name_n_samples = 16       # for ollama backend (paper uses n=16)
 cluster_name_seed = 100
 
