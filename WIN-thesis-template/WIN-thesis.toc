@@ -68,9 +68,9 @@
 \contentsline {paragraph}{Contribution of soft prompt tuning.}{47}{section.4.8}%
 \contentsline {paragraph}{LLM versus MLM naming: structural analysis.}{48}{section.4.8}%
 \contentsline {paragraph}{Why MMR helps LLM naming more than MLM.}{49}{section.4.8}%
-\contentsline {paragraph}{Error analysis and failure modes.}{50}{section.4.8}%
-\contentsline {chapter}{\numberline {5}Conclusion}{52}{chapter.5}%
-\contentsline {section}{\numberline {5.1}Summary of Contributions}{52}{section.5.1}%
-\contentsline {section}{\numberline {5.2}Limitations}{53}{section.5.2}%
-\contentsline {section}{\numberline {5.3}Future Work}{54}{section.5.3}%
-\contentsline {chapter}{\textbf {Bibliography}}{56}{section.5.3}%
+\contentsline {paragraph}{Error analysis and failure modes.}{49}{section.4.8}%
+\contentsline {chapter}{\numberline {5}Conclusion}{51}{chapter.5}%
+\contentsline {section}{\numberline {5.1}Summary of Contributions}{51}{section.5.1}%
+\contentsline {section}{\numberline {5.2}Limitations}{52}{section.5.2}%
+\contentsline {section}{\numberline {5.3}Future Work}{53}{section.5.3}%
+\contentsline {chapter}{\textbf {Bibliography}}{55}{section.5.3}%

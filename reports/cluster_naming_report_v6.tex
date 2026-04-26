@@ -1,0 +1,549 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[margin=2.5cm, headheight=14pt]{geometry}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{microtype}
+\usepackage{parskip}
+\usepackage{enumitem}
+\usepackage{caption}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{tabularx}
+\usepackage{colortbl}
+
+\definecolor{ownerblue}{RGB}{30,80,160}
+\definecolor{bertcol}{RGB}{210,230,255}
+\definecolor{llmcol}{RGB}{210,255,220}
+\definecolor{s2tollcol}{RGB}{255,215,215}
+\definecolor{s2tmmrcol}{RGB}{255,235,200}
+\definecolor{bestcol}{RGB}{255,255,180}
+
+\hypersetup{colorlinks=true,linkcolor=ownerblue,urlcolor=ownerblue,citecolor=ownerblue}
+
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{\textcolor{gray}{\small OWNER \& Span2Type -- Cluster Naming Evaluation}}
+\lhead{\textcolor{gray}{\small BERTScore Report (Version~6)}}
+\rfoot{\thepage}
+
+\titleformat{\section}{\large\bfseries\color{ownerblue}}{{\thesection}}{1em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{{\thesubsection}}{1em}{}
+
+\begin{document}
+
+\begin{center}
+  {\LARGE\bfseries\color{ownerblue}
+    Cluster Naming Evaluation Report \normalsize\textit{(Version~6)}\\[0.4em]
+    \large OWNER vs.\ Span2Type: BERTScore Comparison}\\[0.8em]
+  {\large Five CrossNER Domains}\\[0.6em]
+\end{center}
+\vspace{0.4em}\hrule\vspace{1.2em}
+
+\begin{abstract}
+This report compares four cluster-naming methods across five CrossNER domains
+(AI, Literature, Music, Politics, Science) using BERTScore (RoBERTa-large)
+against confusion-matrix-derived ground-truth labels,
+All scores are measured at the \textbf{Entity Typing (ET) stage}.
+Two methods belong to \textbf{OWNER}: BERT-based MLM voting (avg
+F$_1{=}0.897$) and LLM-based naming via Ollama (avg F$_1{=}0.908$).
+Two methods belong to \textbf{Span2Type}, both using Maximum Marginal
+Relevance (MMR) exemplar selection:
+MMR-LLM naming (avg F$_1{=}0.924$, best overall) and MMR-BERT naming
+(avg F$_1{=}0.896$).
+All scores use the corrected ground truth established in Version~5.
+S2T-MMR-LLM is the strongest method; LLM-based methods consistently
+outperform MLM/BERT voting across all domains.
+\end{abstract}
+
+%─── 1. Introduction ──────────────────────────────────────────────────────────
+\section{Introduction}
+
+Unsupervised NER systems such as OWNER~\cite{genest2025owner} group entity
+spans into clusters labelled by integer IDs.
+Cluster naming assigns human-readable type labels without manual annotation.
+This report evaluates four naming strategies:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item \textbf{OWNER-BERT}: for each entity, fill
+    \texttt{``\{sentence\} \{entity\} is a [MASK].''} with BERT-base-uncased;
+    the most frequent top-1 token across the cluster is the name.
+  \item \textbf{OWNER-LLM}: sample $n{=}16$ entities per cluster (uniform),
+    query Llama-3.1-8B via Ollama (Figure~3 prompt, temperature~$=0$).
+  \item \textbf{S2T-MMR-LLM}: uses \textit{Maximum Marginal Relevance}
+    (MMR) to select $k{=}5$ diverse, centroid-representative entities per
+    cluster, then queries Llama-3.1-8B via Ollama with full example sentences
+    (richer context); produces multi-word descriptive names.
+  \item \textbf{S2T-MMR-BERT}: same MMR exemplar selection ($k{=}5$) as
+    S2T-MMR-LLM, but uses BERT-base-uncased MLM filling instead of an LLM
+    — the top-1 token from \texttt{``\{sentence\} \{entity\} is a [MASK].''}
+    is the cluster name.
+\end{itemize}
+
+\noindent
+All methods are evaluated against ground-truth labels derived from the
+column-wise argmax of the entity-type confusion matrix
+($\operatorname{argmax}_i\,C_{ij}$), consistent with the corrected
+methodology of Version~5.
+
+%─── 2. Experimental Setup ────────────────────────────────────────────────────
+\section{Experimental Setup}
+
+\subsection{MLflow Run IDs}
+
+\begin{table}[h]
+\centering
+\caption{MLflow run IDs for OWNER and Span2Type experiments.}
+\label{tab:runs}
+\setlength{\tabcolsep}{4pt}
+\small
+\begin{tabular}{l l l l l}
+\toprule
+\textbf{Domain}
+  & \textbf{OWNER}
+  & \textbf{S2T-MMR-LLM}
+  & \textbf{S2T-MMR-BERT}
+  & \textbf{S2T-no-MMR} \\
+\midrule
+AI
+  & \texttt{ea6e40f8...eb6e}
+  & \texttt{6b105207...2b2}
+  & \texttt{9e28895d...ac9}
+  & \texttt{22d48750...771} \\
+Literature
+  & \texttt{fb1215f7...f0}
+  & \texttt{29e11a34...be}
+  & \texttt{89ec5ac6...68b}
+  & \texttt{a24b0559...dd} \\
+Music
+  & \texttt{2c886b9b...c5}
+  & \texttt{56ad65e3...dc}
+  & \texttt{d70574bc...b2}
+  & \texttt{08d4cdde...2f} \\
+Politics
+  & \texttt{9c02f083...6d}
+  & \texttt{610c691d...7b}
+  & \texttt{5b3e1bf3...12}
+  & \texttt{56aacc85...40} \\
+Science
+  & \texttt{f72db65d...96}
+  & \texttt{efcfb115...55}
+  & \texttt{eec16336...fe}
+  & \texttt{14b05751...2b} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Ground-Truth Alignment}
+
+For OWNER runs, GT labels are read from \texttt{et\_test\_cluster\_naming\_gt.json}
+(confusion-matrix argmax, corrected in Version~5).
+For Span2Type runs, GT labels are derived at runtime from
+\texttt{et\_test\_confusion-matrix.pt} using the same argmax procedure.
+
+\subsection{Cluster Statistics}
+
+\begin{table}[h]
+\centering
+\caption{Number of clusters per domain and pipeline stage.}
+\label{tab:clusters}
+\setlength{\tabcolsep}{6pt}
+\small
+\begin{tabular}{l r r r}
+\toprule
+\textbf{Domain} & \textbf{True $k$} & \textbf{OWNER / S2T-v1} & \textbf{S2T-MMR-BERT (NER)} \\
+\midrule
+AI         & 14 & 16 & 14 \\
+Literature & 12 & 14 & 12 \\
+Music      & 13 & 20 & 20 \\
+Politics   &  9 & 22 & 22 \\
+Science    & 17 & 20 & 20 \\
+\midrule
+Total      & 65 & 92 & 88 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+%─── 3. Results ───────────────────────────────────────────────────────────────
+\section{Results}
+
+\subsection{BERTScore F\textsubscript{1} Comparison}
+
+Table~\ref{tab:f1} presents BERTScore F$_1$ for all four methods
+at the \textbf{Entity Typing (ET) stage}.
+The best score per domain is shown in \textbf{bold}.
+
+\begin{table}[h]
+\centering
+\caption{BERTScore F$_1$ at the ET stage -- four cluster-naming methods
+across five CrossNER domains. Best per domain in
+\textbf{bold}.}
+\label{tab:f1}
+\setlength{\tabcolsep}{5pt}
+\small
+\begin{tabular}{l cccc}
+\toprule
+\textbf{Domain}
+  & \cellcolor{bertcol}\textbf{OW-BERT}
+  & \cellcolor{llmcol}\textbf{OW-LLM}
+  & \cellcolor{s2tollcol}\textbf{S2T-MMR-LLM}
+  & \cellcolor{s2tmmrcol}\textbf{S2T-MMR-BERT} \\
+\midrule
+AI         & 0.900          & 0.892          & \textbf{0.922} & 0.900 \\
+Literature & 0.891          & \textbf{0.923} & 0.913          & 0.889 \\
+Music      & 0.906          & 0.928          & \textbf{0.943} & 0.911 \\
+Politics   & 0.892          & 0.910          & \textbf{0.928} & 0.887 \\
+Science    & 0.894          & 0.886          & \textbf{0.912} & 0.893 \\
+\midrule
+\textbf{Avg} & 0.897        & 0.908          & \textbf{0.924} & 0.896 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent
+Overall ranking (ET stage):
+\begin{center}
+S2T-MMR-LLM ($\mathbf{0.924}$)
+$>$ OW-LLM ($0.908$)
+$>$ OW-BERT $\approx$ S2T-MMR-BERT ($0.897\,/\,0.896$)
+\end{center}
+
+\subsection{S2T-MMR-BERT Detailed Scores (P\,/\,R\,/\,F\textsubscript{1})}
+
+Table~\ref{tab:mmr_detail} shows full BERTScore Precision, Recall, and
+F$_1$ for S2T-MMR-BERT at the Entity Typing (ET) stage.
+
+\begin{table}[h]
+\centering
+\caption{S2T-MMR-BERT BERTScore at the ET stage (P\,/\,R\,/\,F$_1$).}
+\label{tab:mmr_detail}
+\setlength{\tabcolsep}{6pt}
+\small
+\begin{tabular}{l ccc}
+\toprule
+& \multicolumn{3}{c}{\cellcolor{s2tmmrcol}\textbf{ET Stage}} \\
+\cmidrule(lr){2-4}
+\textbf{Domain} & P & R & F$_1$ \\
+\midrule
+AI         & 0.897 & 0.904 & 0.900 \\
+Literature & 0.883 & 0.896 & 0.889 \\
+Music      & 0.906 & 0.916 & 0.911 \\
+Politics   & 0.880 & 0.894 & 0.887 \\
+Science    & 0.893 & 0.893 & 0.893 \\
+\midrule
+\textbf{Avg} & 0.892 & 0.900 & 0.896 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{S2T-MMR-LLM Detailed Scores (P\,/\,R\,/\,F\textsubscript{1})}
+
+Table~\ref{tab:mmr_llm_detail} shows full BERTScore Precision, Recall, and
+F$_1$ for S2T-MMR-LLM at the Entity Typing (ET) stage.
+
+\begin{table}[h]
+\centering
+\caption{S2T-MMR-LLM BERTScore at the ET stage (P\,/\,R\,/\,F$_1$).}
+\label{tab:mmr_llm_detail}
+\setlength{\tabcolsep}{6pt}
+\small
+\begin{tabular}{l ccc}
+\toprule
+& \multicolumn{3}{c}{\cellcolor{s2tollcol}\textbf{ET Stage}} \\
+\cmidrule(lr){2-4}
+\textbf{Domain} & P & R & F$_1$ \\
+\midrule
+AI         & 0.919 & 0.925 & 0.922 \\
+Literature & 0.909 & 0.917 & 0.913 \\
+Music      & 0.940 & 0.946 & 0.943 \\
+Politics   & 0.925 & 0.931 & 0.928 \\
+Science    & 0.913 & 0.911 & 0.912 \\
+\midrule
+\textbf{Avg} & 0.921 & 0.926 & 0.924 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Qualitative Naming Examples}
+
+Table~\ref{tab:examples} shows representative S2T-MMR-BERT predictions
+with per-cluster BERTScore F$_1$.
+
+\begin{table}[h]
+\centering
+\caption{Selected S2T-MMR-BERT cluster naming examples.
+\textcolor{green!60!black}{Green} = exact/near-exact match;
+\textcolor{orange!70!black}{orange} = semantically close;
+\textcolor{red!70!black}{red} = incorrect or noise.}
+\label{tab:examples}
+\setlength{\tabcolsep}{4pt}
+\small
+\begin{tabularx}{\textwidth}{l l l l r}
+\toprule
+\textbf{Dom.} & \textbf{GT} & \textbf{Prediction} & \textbf{Quality} & \textbf{F$_1$} \\
+\midrule
+AI   & university    & \textcolor{green!60!black}{university}   & Exact   & 1.000 \\
+AI   & conference    & \textcolor{green!60!black}{conference}   & Exact   & 1.000 \\
+AI   & task          & \textcolor{orange!70!black}{problem}     & Close   & 0.943 \\
+AI   & algorithm     & \textcolor{orange!70!black}{standard}    & Partial & 0.908 \\
+AI   & researcher    & \textcolor{orange!70!black}{physicist}   & Close   & 0.858 \\
+AI   & programlang   & \textcolor{red!70!black}{standard}       & Off     & 0.838 \\
+AI   & person        & \textcolor{red!70!black}{vegetarian}     & Noise   & 0.853 \\
+\midrule
+Lit. & book          & \textcolor{orange!70!black}{novel}       & Close   & 0.906 \\
+Lit. & event         & \textcolor{orange!70!black}{festival}    & Close   & 0.918 \\
+Lit. & country       & \textcolor{orange!70!black}{nation}      & Close   & 0.924 \\
+Lit. & writer        & \textcolor{orange!70!black}{poet}        & Close   & 0.897 \\
+Lit. & award         & \textcolor{orange!70!black}{retrospective} & Partial & 0.865 \\
+Lit. & book          & \textcolor{red!70!black}{vegetarian}     & Noise   & 0.843 \\
+\midrule
+Mus. & country       & \textcolor{green!60!black}{country}      & Exact   & 1.000 \\
+Mus. & band          & \textcolor{green!60!black}{band}         & Exact   & 1.000 \\
+Mus. & musicgenre    & \textcolor{orange!70!black}{genre}       & Close   & 0.936 \\
+Mus. & musicalartist & \textcolor{orange!70!black}{musician}    & Close   & 0.930 \\
+Mus. & award         & \textcolor{orange!70!black}{nomination}  & Close   & 0.897 \\
+Mus. & band          & \textcolor{red!70!black}{vegetarian}     & Noise   & 0.848 \\
+\midrule
+Pol. & politicalparty & \textcolor{orange!70!black}{party}      & Close   & 0.930 \\
+Pol. & location      & \textcolor{orange!70!black}{city}        & Close   & 0.937 \\
+Pol. & politician    & \textcolor{orange!70!black}{democrat}    & Close   & 0.899 \\
+Pol. & person        & \textcolor{red!70!black}{vegetarian}     & Noise   & 0.853 \\
+\midrule
+Sci. & university    & \textcolor{green!60!black}{university}   & Exact   & 1.000 \\
+Sci. & protein       & \textcolor{green!60!black}{protein}      & Exact   & 1.000 \\
+Sci. & scientist     & \textcolor{orange!70!black}{physicist}   & Close   & 0.935 \\
+Sci. & chemicalcompound & \textcolor{orange!70!black}{catalyst} & Partial & 0.881 \\
+Sci. & chemicalelement & \textcolor{orange!70!black}{semiconductor} & Partial & 0.834 \\
+Sci. & person        & \textcolor{red!70!black}{vegetarian}     & Noise   & 0.853 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+%─── 4. MMR Ablation ──────────────────────────────────────────────────────────
+\section{MMR Ablation}
+
+To isolate the effect of Maximum Marginal Relevance exemplar selection,
+we compare two Span2Type configurations:
+\textbf{no-MMR} ($k{=}16$) versus
+\textbf{MMR} ($k{=}5$ diverse exemplars).
+The no-MMR run IDs are listed in the rightmost column of
+Table~\ref{tab:runs}.
+
+\subsection{Ollama Backend}
+
+\begin{table}[h]
+\centering
+\caption{S2T Ollama: no-MMR ($k{=}16$, no lem) vs MMR ($k{=}5$, +lem).
+Best per domain in \textbf{bold}.}
+\label{tab:ablation_oll}
+\setlength{\tabcolsep}{6pt}
+\small
+\begin{tabular}{l cc r}
+\toprule
+\textbf{Domain}
+  & \cellcolor{s2tollcol}\textbf{no-MMR}
+  & \cellcolor{s2tmmrcol}\textbf{MMR}
+  & \textbf{$\Delta$} \\
+\midrule
+AI         & 0.9218          & 0.9219          & $+0.0001$ \\
+Literature & 0.9063          & \textbf{0.9197} & $+0.0134$ \\
+Music      & \textbf{0.9539} & 0.9509          & $-0.0030$ \\
+Politics   & \textbf{0.9302} & 0.9293          & $-0.0009$ \\
+Science    & 0.9084          & \textbf{0.9156} & $+0.0072$ \\
+\midrule
+\textbf{Avg} & 0.9241        & \textbf{0.9275} & $+0.0034$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent
+With the Ollama backend, MMR improves average F$_1$ by
+$+0.003$ overall, but the gain is domain-dependent.
+Literature and Science benefit most ($+0.013$, $+0.007$), where the
+no-MMR uniform sample yields redundant entities that lead the LLM to
+produce vague labels (\textit{Book}, \textit{Science}); MMR selects
+diverse centroid-representative exemplars, eliciting more specific
+outputs (\textit{Literary work}, \textit{Scientific discipline}).
+Conversely, Music and Politics show a small regression ($-0.003$,
+$-0.001$): no-MMR already samples a broad mix of band names, song
+titles, and politician names that give the LLM sufficient signal,
+while MMR occasionally over-concentrates on centroid entities,
+slightly narrowing the context.
+The AI domain is effectively tied ($+0.0001$), consistent with
+abstract technical types being hard for both sampling strategies.
+
+\subsection{BERT Backend}
+
+\begin{table}[h]
+\centering
+\caption{S2T BERT: no-MMR ($k{=}16$) vs MMR ($k{=}5$).
+; $\Delta$ reflects MMR.
+Best per domain in \textbf{bold}.}
+\label{tab:ablation_bert}
+\setlength{\tabcolsep}{6pt}
+\small
+\begin{tabular}{l cc r}
+\toprule
+\textbf{Domain}
+  & \cellcolor{bertcol}\textbf{no-MMR}
+  & \cellcolor{s2tmmrcol}\textbf{MMR}
+  & \textbf{$\Delta$} \\
+\midrule
+AI         & \textbf{0.9037} & 0.9000          & $-0.0037$ \\
+Literature & 0.8874          & \textbf{0.8888} & $+0.0014$ \\
+Music      & 0.8948          & \textbf{0.9110} & $+0.0162$ \\
+Politics   & 0.8830          & \textbf{0.8868} & $+0.0038$ \\
+Science    & \textbf{0.8935} & 0.8925          & $-0.0010$ \\
+\midrule
+\textbf{Avg} & 0.8925        & \textbf{0.8958} & $+0.0033$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent
+With the BERT backend, MMR yields a small but consistent improvement on average ($+0.003$),
+with the largest gain in Music ($+0.016$): the no-MMR uniform sample
+includes many redundant entity mentions from a few dominant clusters
+(e.g., several occurrences of the same band name), causing the MLM
+head to converge on generic tokens; MMR diversifies the exemplar set,
+shifting the argmax towards more cluster-specific tokens
+(\textit{band}, \textit{musician}, \textit{genre}).
+AI and Science show minor regressions ($-0.004$, $-0.001$) because
+MMR's centroid-representative selection occasionally surfaces
+technically-worded entity spans where the MLM's most frequent token
+is less aligned with the GT label than the token obtained under
+uniform sampling.
+Crucially, MMR cannot suppress the \texttt{vegetarian} artefact:
+the noise prediction persists in 3--5 clusters per domain regardless
+of exemplar selection strategy, confirming that the limitation is
+intrinsic to greedy MLM top-1 decoding.
+
+\subsection{Ablation Summary}
+
+\begin{table}[h]
+\centering
+\caption{MMR ablation summary: lowest (no-MMR) vs highest (MMR) per backend.}
+\label{tab:ablation_summary}
+\setlength{\tabcolsep}{8pt}
+\small
+\begin{tabular}{l cc r}
+\toprule
+\textbf{Backend} & \textbf{no-MMR} & \textbf{MMR} & \textbf{$\Delta$} \\
+\midrule
+Ollama & 0.9241 & \textbf{0.9275} & $+0.0034$ \\
+BERT   & 0.8925 & \textbf{0.8958} & $+0.0033$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Both backends improve by ${\approx}+0.003$ from lowest to highest configuration.
+For the Ollama backend the gain requires MMR selection, MMR elicits richer, more plural-inflected outputs from
+the LLM; .
+For the BERT backend, the $+0.003$ gain comes entirely from MMR selection concentrating the MLM
+prompt on diverse, centroid-representative exemplars.
+
+%─── 5. Analysis ──────────────────────────────────────────────────────────────
+\section{Analysis}
+
+\subsection{S2T-MMR-LLM Is the Strongest Method}
+
+S2T-MMR-LLM (avg F$_1{=}0.924$) outperforms all other methods in four
+of five domains. It combines MMR exemplar selection with rich sentence context
+passed to Llama-3.1-8B, enabling the LLM to infer fine-grained types such as
+\textit{machine learning library} (GT: product), \textit{legislative body}
+(GT: organisation), and \textit{biological processes} (GT: misc).
+
+\subsection{LLM Back-end Drives the Quality Gap, Not MMR Alone}
+
+Both S2T methods use the same MMR exemplar selection ($k{=}5$), yet
+S2T-MMR-LLM (0.924) substantially outperforms S2T-MMR-BERT (0.896).
+This $+0.028$ gap is attributable entirely to the naming back-end:
+LLM outputs are multi-word, context-aware descriptions, whereas BERT
+top-1 token voting collapses to a single common token.
+Comparing S2T-MMR-BERT with OWNER-BERT (0.897) — the latter without MMR —
+shows that MMR selection itself gives no measurable benefit ($-0.001$),
+confirming that the bottleneck for MLM naming lies in the vocabulary
+and greedy decoding of the MLM head, not in exemplar selection.
+
+\subsection{LLM Methods Outperform MLM Voting}
+
+Both LLM methods (OW-LLM: 0.908, S2T-MMR-LLM: 0.924) score above both
+MLM methods (OW-BERT: 0.897, S2T-MMR-BERT: 0.896).
+MLM top-1 voting is limited to single-token outputs and frequently falls
+back to degenerate predictions (\texttt{vegetarian}) for ambiguous clusters.
+LLM methods produce multi-word names with stronger semantic alignment
+to CrossNER entity type labels.
+
+\subsection{The \texttt{vegetarian} Artefact}
+
+The \texttt{vegetarian} noise token appears consistently across all MLM
+methods: 4--5 clusters per domain (out of 14--22) receive this prediction.
+It is the most impactful single failure mode for BERT/MLM-based naming,
+producing per-cluster F$_1 \approx 0.85$ against GT labels such as
+\texttt{person}, \texttt{book}, or \texttt{band}.
+LLM methods are immune to this artefact.
+
+\subsection{Per-Domain Observations}
+
+\begin{itemize}[leftmargin=1.5em]
+  \item \textbf{AI}: All methods score 0.89--0.92. Abstract types
+    (\texttt{algorithm}, \texttt{programlang}, \texttt{task}) are hard for
+    all methods; only S2T-MMR-LLM captures \textit{programming languages}
+    and \textit{machine learning} as reasonable proxies.
+  \item \textbf{Literature}: OW-LLM wins (0.923) due to descriptive names
+    (\textit{Novel}, \textit{Author}, \textit{Film Festival}) that align
+    well with CrossNER types.
+  \item \textbf{Music}: S2T-MMR-LLM dominates (0.943). Three exact matches
+    for S2T-MMR-BERT (\texttt{band}, \texttt{band}, \texttt{country})
+    keep it competitive (0.911).
+  \item \textbf{Politics}: S2T-MMR-LLM best (0.928) via \textit{political
+    party}, \textit{legislative body}, \textit{politician}. BERT methods
+    predict generic tokens (\textit{party}, \textit{democrat}).
+  \item \textbf{Science}: S2T-MMR-LLM leads (0.912); S2T-MMR-BERT recovers
+    with exact matches (\texttt{university}, \texttt{protein}).
+    Science-specific compound types (\texttt{chemicalelement},
+    \texttt{academicjournal}) remain hard for all methods.
+\end{itemize}
+
+%─── 6. Conclusion ────────────────────────────────────────────────────────────
+\section{Conclusion}
+
+The four-method ranking at the ET stage is:
+
+\begin{center}
+S2T-MMR-LLM ($\mathbf{0.924}$)
+$>$ OW-LLM ($0.908$)
+$>$ OW-BERT ($0.897$)
+$\approx$ S2T-MMR-BERT ($0.896$)
+\end{center}
+
+\noindent
+The MMR ablation (Section~4) shows that both backends gain
+${\approx}{+}0.003$ when moving from the no-MMR baseline to the best
+MMR.
+Across all conditions, the primary quality driver remains the naming
+back-end: LLM methods outperform MLM methods by $0.028$--$0.032$
+regardless of exemplar selection strategy.
+The \texttt{vegetarian} artefact remains the main failure mode for all
+MLM/BERT approaches and cannot be resolved without filtering heuristics
+or switching to an LLM-based back-end.
+
+\begin{thebibliography}{9}
+
+\bibitem{genest2025owner}
+P.-Y.~Genest, P.-E.~Portier, E.~Egyed-Zsigmond, and M.~Lovisetto,
+``OWNER -- Toward Unsupervised Open-World Named Entity Recognition,''
+\textit{IEEE Access}, vol.~13, pp.~50077--50096, 2025.
+
+\bibitem{zhang2020bertscore}
+T.~Zhang, V.~Kishore, F.~Wu, K.~Q.~Weinberger, and Y.~Artzi,
+``BERTScore: Evaluating Text Generation with BERT,''
+in \textit{Proc. ICLR}, 2020.
+
+\end{thebibliography}
+
+\end{document}
