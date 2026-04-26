@@ -96,10 +96,22 @@ J.~Ma, M.~Ballesteros, S.~Doss, R.~Anubhai, S.~Mallya, Y.~Al-Onaizan, and
   \emph{Findings of the Association for Computational Linguistics: {ACL} 2022},
   2022, pp. 171--181.
 
+\bibitem{choi-etal-2018-ultra}
+E.~Choi, O.~Levy, Y.~Choi, and L.~Zettlemoyer, ``Ultra-fine entity typing,'' in
+  \emph{Proceedings of the 56th Annual Meeting of the Association for
+  Computational Linguistics (Volume 1: Long Papers)}, 2018, pp. 87--96.
+
 \bibitem{wei-etal-2023-chatie}
 Z.~Wei, J.~Su, Y.~Wang, Y.~Tian, and Y.~Chang, ``Zero-shot named entity
   recognition with large language models,'' \emph{arXiv preprint
   arXiv:2401.15303}, 2024.
+
+\bibitem{zaratiana-etal-2023-gliner}
+U.~Zaratiana, N.~Tomeh, P.~Holat, and T.~Charnois, ``{GLiNER}: Generalist model
+  for named entity recognition using bidirectional transformer,'' in
+  \emph{Proceedings of the 2024 Conference of the North {A}merican Chapter of
+  the Association for Computational Linguistics: Human Language Technologies},
+  2024, pp. 5364--5376.
 
 \bibitem{he-etal-2023-debertav3}
 P.~He, J.~Gao, and W.~Chen, ``{D}e{BERT}a{V}3: Improving {D}e{BERT}a using
@@ -121,6 +133,12 @@ Z.~Zhong and D.~Chen, ``A frustratingly easy approach for entity and relation
   extraction,'' in \emph{Proceedings of the 2021 Conference of the North
   {A}merican Chapter of the Association for Computational Linguistics: Human
   Language Technologies}, 2021, pp. 50--61.
+
+\bibitem{li-etal-2020-unified}
+X.~Li, J.~Feng, Y.~Meng, Q.~Han, F.~Wu, and J.~Li, ``A unified {MRC} framework
+  for named entity recognition,'' in \emph{Proceedings of the 58th Annual
+  Meeting of the Association for Computational Linguistics}, 2020, pp.
+  5849--5859.
 
 \bibitem{petroni-etal-2019-language}
 F.~Petroni, T.~Rockt{\"a}schel, S.~Riedel, P.~Lewis, A.~Bakhtin, Y.~Wu, and
@@ -152,6 +170,17 @@ B.~Lester, R.~Al-Rfou, and N.~Constant, ``The power of scale for
   parameter-efficient prompt tuning,'' in \emph{Proceedings of the 2021
   Conference on Empirical Methods in Natural Language Processing}, 2021, pp.
   3045--3059.
+
+\bibitem{houlsby-etal-2019-parameter}
+N.~Houlsby, A.~Giurgiu, S.~Jastrzebski, B.~Morrone, Q.~de~Laroussilhe,
+  A.~Gesmundo, M.~Attariyan, and S.~Gelly, ``Parameter-efficient transfer
+  learning for {NLP},'' in \emph{Proceedings of the 36th International
+  Conference on Machine Learning}, 2019, pp. 2790--2799.
+
+\bibitem{hu-etal-2022-lora}
+E.~J. Hu, Y.~Shen, P.~Wallis, Z.~Allen-Zhu, Y.~Li, S.~Wang, L.~Wang, and
+  W.~Chen, ``{LoRA}: Low-rank adaptation of large language models,'' in
+  \emph{International Conference on Learning Representations}, 2022.
 
 \bibitem{brown-etal-2020-language}
 T.~B. Brown, B.~Mann, N.~Ryder, M.~Subbiah, J.~Kaplan, P.~Dhariwal,
@@ -195,10 +224,5 @@ N.~X. Vinh, J.~Epps, and J.~Bailey, ``Information theoretic measures for
 T.~Zhang, V.~Kishore, F.~Wu, K.~Q. Weinberger, and Y.~Artzi, ``{BERT}score:
   Evaluating text generation with {BERT},'' in \emph{International Conference
   on Learning Representations}, 2020.
-
-\bibitem{hu-etal-2022-lora}
-E.~J. Hu, Y.~Shen, P.~Wallis, Z.~Allen-Zhu, Y.~Li, S.~Wang, L.~Wang, and
-  W.~Chen, ``{LoRA}: Low-rank adaptation of large language models,'' in
-  \emph{International Conference on Learning Representations}, 2022.
 
 \end{thebibliography}
