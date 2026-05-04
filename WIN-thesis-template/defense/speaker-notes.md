@@ -28,7 +28,7 @@
 **⏱ ~1 min**
 
 Good morning, committee members, and thank you for being here today.
-My name is Nguyen Minh Khoa, and this is my thesis defense for the degree of Master of Science in Computer Science.
+My name is Nguyen Anh Khoa, and this is my thesis defense for the degree of Master of Science in Computer Science.
 The title of my thesis is *Span2Type: An Improved Open-World Named Entity Recognition Pipeline*, and I will be presenting the research I have conducted over the past year under the supervision of Professor [Supervisor Name].
 
 > **Tip:** Pause after saying the thesis title. Let the committee settle in before moving on.
@@ -361,7 +361,7 @@ The LLM backend sends all 16 entity mentions in a single two-turn prompt to Llam
 Temperature is set to zero for deterministic output, and the response is post-processed to at most three words.
 The LLM can generate multi-word labels like *political party* or *research institute*, and it is immune to the MLM hallucination artefact I will describe in the discussion.
 
-The comparison table at the bottom previews the key result: the LLM backend achieves 0.956 average BERTScore-F1 versus 0.896 for the MLM backend.
+The comparison table at the bottom previews the key result: the LLM backend achieves 0.924 average BERTScore-F1 versus 0.897 for the MLM backend.
 
 ---
 
@@ -449,10 +449,11 @@ This is an honest failure mode that I analyze in the discussion.
 
 The naming results show a clear hierarchy among the variants.
 
-Span2Type-LLM with MMR achieves the highest average BERTScore-F1 of **0.956** and is the best system in three of five domains.
+Span2Type-LLM with MMR achieves the highest average BERTScore-F1 of **0.924** and is the best system in four of five domains.
 
 The most important comparison is the **budget-controlled** one in the bottom half of the slide: both OWNER-LLM and Span2Type-LLM use exactly 16 exemplars with the same Llama-3 model, differing only in selection strategy — random versus MMR.
-Span2Type-LLM outperforms OWNER-LLM by +0.012 on average, confirming that the MMR selection strategy itself adds value beyond what random sampling achieves under the same inference budget.
+Span2Type-LLM outperforms OWNER-LLM by +0.016 on average, confirming that the MMR selection strategy itself adds value beyond what random sampling achieves under the same inference budget.
+The single exception is the Literature domain, where OWNER LLM random selection (0.923) slightly outperforms our MMR selection (0.913) — likely because literary entity clusters are semantically tight and MMR's diversity pressure selects peripheral outliers rather than representative exemplars.
 
 The naming_summary.png figure on the right panel is particularly instructive.
 The right panel shows the correlation between cluster purity and BERTScore-F1 — and the Pearson r is essentially zero, at 0.01.
@@ -498,8 +499,8 @@ They suffer three structural weaknesses: no dedicated span detection stage train
 Span2Type's separation of detection, embedding, and clustering into dedicated stages avoids all three weaknesses.
 
 **Finding 3 — When MMR hurts.**
-The Music domain is the exception where OWNER random selection (0.957) outperforms MMR (0.939).
-Music entity clusters are semantically tight and homogeneous — *band*, *genre*, *album* are frequent and unambiguous single-token words.
+The Literature domain is the exception where OWNER LLM random selection (0.923) outperforms our MMR selection (0.913).
+Literary entity clusters are semantically tight and narrow — *writer*, *novel*, *literarygenre* occupy a confined semantic field.
 In this regime, MMR's diversity pressure selects peripheral cluster members that introduce noise rather than broaden coverage.
 The practical recommendation is: use MMR for heterogeneous clusters and centroid-nearest for tight, homogeneous clusters.
 
@@ -526,7 +527,7 @@ Second, I introduced a two-stage prompt-initialized fine-tuning approach for ent
 This contributed +2.8 AMI points in the ablation study.
 
 Third, I proposed MMR-based exemplar selection for automatic cluster naming, producing more diverse and representative evidence for the naming model.
-The LLM backend with MMR achieves 0.956 average BERTScore-F1, outperforming random selection by +0.012 in the budget-controlled comparison.
+The LLM backend with MMR achieves 0.924 average BERTScore-F1, outperforming random selection by +0.016 in the budget-controlled comparison.
 
 Together, these three improvements bring Span2Type to **61.4 average AMI** on CrossNER — a **12-point improvement** over the OWNER baseline of 49.4.
 

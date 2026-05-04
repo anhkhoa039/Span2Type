@@ -5,6 +5,7 @@ AGENTS.md
 plans/
 release-manifest.json
 .repomixignore
+WIN-thesis-template/defense/span2type-slides
 
 mlruns/
 mlartifacts/

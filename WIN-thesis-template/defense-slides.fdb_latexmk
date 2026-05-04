@@ -1,12 +1,12 @@
 # Fdb version 3
-["xdvipdfmx"] 1777300747 "defense-slides.xdv" "defense-slides.pdf" "defense-slides" 1777300748
-  "defense-slides.xdv" 1777300747 711924 edad71b5d92f996082840241492c21f1 "xelatex"
+["xdvipdfmx"] 0 "defense-slides.xdv" "defense-slides.pdf" "defense-slides" 0
+  "defense-slides.xdv" 0 -1 0 "xelatex"
   (generated)
   "defense-slides.pdf"
-["xelatex"] 1777300744 "defense-slides.tex" "defense-slides.xdv" "defense-slides" 1777300748
-  "../figure/Span2Type.png" 1776623108 549851 55955a71a244926784a7383aa1161161 ""
-  "../figure/bertscore_bar.png" 1776623108 51112 b4791a96432e2bc003c44439672dee8c ""
-  "../figure/naming_summary.png" 1776623108 110417 156d63938c97583931a06cb7aa30b7a3 ""
+["xelatex"] 1777298821 "defense/defense-slides.tex" "defense-slides.xdv" "defense-slides" 1777298821
+  "../figure/Span2Type.png" 0 -1 0 ""
+  "../figure/bertscore_bar.png" 0 -1 0 ""
+  "../figure/naming_summary.png" 0 -1 0 ""
   "/etc/texmf/web2c/texmf.cnf" 1775577655 475 c0e671620eb5563b2130f56340a5fde8 ""
   "/usr/share/texlive/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/usr/share/texlive/texmf-dist/fonts/tfm/adobe/zapfding/pzdr.tfm" 1136768653 1528 f853c4d1b4e0550255e02831fdc8496f ""
@@ -281,13 +281,13 @@
   "/usr/share/texlive/texmf-dist/web2c/texmf.cnf" 1644012257 39432 7155514e09a3d69036fac785183a21c2 ""
   "/usr/share/texmf/web2c/texmf.cnf" 1644012257 39432 7155514e09a3d69036fac785183a21c2 ""
   "/var/lib/texmf/web2c/xetex/xelatex.fmt" 1775578860 3720953 4796aa695c12a7be1aa0135a95e00ee5 ""
-  "aidept logo.png" 1776877988 9614 90ddb9aa31e3f32c09c985ca918c6964 ""
-  "cgu logo2.png" 1776878833 22475 f132c5656a34dff59ac37fd745d8fd46 ""
-  "defense-slides.aux" 1777300747 9027 096c1a5f6d7f8739d9e5ff4c30bd4427 "xelatex"
-  "defense-slides.nav" 1777300747 4676 e394b4f38c48a5bd1bc68cf7c82fdd12 "xelatex"
-  "defense-slides.out" 1777300747 964 ab6a27e164848eec4a345d27890fff43 "xelatex"
-  "defense-slides.tex" 1777300675 73304 0b1a735527c22aa7f9eec872496ac47e ""
-  "defense-slides.toc" 1777300747 370 7f0ab158da9b10e9c21c4874a8bc5ed1 "xelatex"
+  "aidept logo.png" 0 -1 0 ""
+  "cgu logo2.png" 0 -1 0 ""
+  "defense-slides.aux" 1777298821 32 3985256e7290058c681f74d7a3565a19 "xelatex"
+  "defense-slides.nav" 0 -1 0 "xelatex"
+  "defense-slides.out" 0 -1 0 "xelatex"
+  "defense-slides.toc" 0 -1 0 "xelatex"
+  "defense/defense-slides.tex" 1777298711 73292 202916a248771c4ee02b6604079e46d1 ""
   (generated)
   "defense-slides.aux"
   "defense-slides.log"

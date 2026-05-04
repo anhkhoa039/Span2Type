@@ -1154,7 +1154,7 @@
       & \textbf{Multi-word output} & \textbf{No hallucination} & \textbf{Avg BERTScore-F1} \\
       \midrule
       MLM (MMR) & \xmark & \xmark & 0.896 \\
-      \textbf{LLM (MMR)} & \cmark & \cmark & \textbf{0.956} \\
+      \textbf{LLM (MMR)} & \cmark & \cmark & \textbf{0.924} \\
       \bottomrule
     \end{tabular}
   \end{center}
@@ -1207,19 +1207,19 @@
         \toprule
         \textbf{Component} & \textbf{Setting} \\
         \midrule
-        Detector backbone & BERT-base-cased \\
+        Detector backbone & BART-based \\
         Detector LR       & $1\times10^{-5}$, 50 epochs \\
         EMA decay         & $\alpha = 0.995$ \\
         \midrule
-        Typing backbone   & BERT-base-uncased \\
+        Typing backbone   & DeBERTav3 \\
         Full FT LR        & $2\times10^{-5}$, 30 epochs \\
         Soft prompt $N_p$ & 5 tokens \\
         Stage 1 LR        & $3\times10^{-3}$, 10 epochs \\
         Stage 2 LR        & $1\times10^{-5}$, 20 epochs \\
-        Triplet margin    & $\gamma = 1.0$ \\
+        % Triplet margin    & $\gamma = 1.0$ \\
         \midrule
         Clustering range  & $k\in[2,30]$, step 2 \\
-        k-means restarts  & 10 per $k$ \\
+        % k-means restarts  & 10 per $k$ \\
         \midrule
         MMR exemplars     & $K_e=16$, $\lambda=0.7$ \\
         LLM               & Llama-3 via Ollama \\
@@ -1411,25 +1411,26 @@
         \toprule
         \textbf{Method} & AI & Lit & Mus & Pol & Sci & \textbf{Avg} \\
         \midrule
-        \#Clusters & 14 & 14 & 22 & 24 & 22 & -- \\
-        \#GT Types & 14 & 12 & 13 &  9 & 17 & -- \\
+        \#Clusters & 14 & 14 & 22 & 24 & 22 & 96 \\
+        \#GT Types & 14 & 12 & 13 &  9 & 17 & 65 \\
         \midrule
-        OWNER MLM & \textbf{.989} & .974 & \textbf{.958} & \textbf{.964} & .945 & .966 \\
-        OWNER LLM & .929 & .954 & .957 & .953 & .926 & .944 \\
+        OWNER MLM  & .900 & .891 & .906 & .892 & .894 & .897 \\
+        OWNER LLM (rand.) & .892 & .923 & .928 & .910 & .886 & .908 \\
         \midrule
-        S2T Centroid & .904 & .887 & .895 & .883 & .894 & .892 \\
-        S2T MLM+MMR & .900 & .889 & .911 & .887 & .893 & .896 \\
+        S2T Centroid & --- & --- & --- & --- & --- & .893 \\
+        S2T MLM+MMR &.900 & .889 & .911 & .887 & .893 & .896 \\
         \rowcolor{gold!25}
-        \textbf{S2T LLM+MMR} & .958 & \textbf{.979} & .939 & \textbf{.964} & \textbf{.950} & \textbf{.956} \\
+        \textbf{S2T LLM+MMR} & \textbf{.922} & .913 & \textbf{.943} & \textbf{.928} & \textbf{.912} & \textbf{.924} \\
         \bottomrule
       \end{tabular}
       \vspace{0.4em}
       \normalsize
       \textbf{Budget-controlled comparison} ($n=16$, same LLM):
       \begin{itemize}
-        \item Span2Type-LLM (MMR): 0.956
-        \item OWNER (LLM random): 0.944
-        \item \hg{MMR gain: $+0.012$ avg}
+        \item Span2Type-LLM (MMR): \textbf{0.924}
+        \item OWNER (LLM random): 0.908
+        \item \hg{MMR gain: $+0.016$ avg}
+        \item Lit exception: OWNER LLM (0.923) $>$ ours (0.913)
       \end{itemize}
     \end{column}
     \begin{column}{0.5\textwidth}
@@ -1539,9 +1540,9 @@
     \begin{column}{0.5\textwidth}
       \textbf{When does MMR hurt?}
       \begin{itemize}
-        \item Music domain: OWNER random (0.957) $>$ MMR (0.939)
-        \item Music clusters are \textbf{tight \& homogeneous}:\\
-          \textit{band}, \textit{genre}, \textit{album} — unambiguous
+        \item Literature: OWNER LLM random (0.923) $>$ S2T MMR (0.913)
+        \item Literary clusters are \textbf{tight \& homogeneous}:\\
+          \textit{writer}, \textit{novel}, \textit{literarygenre} — narrow semantic field
         \item MMR's diversity pressure selects peripheral outliers $\to$ noise
         \item \hl{Rule: use MMR for heterogeneous clusters;\\centroid-nearest for tight clusters}
       \end{itemize}
@@ -1582,8 +1583,8 @@
 
         \item \textbf{MMR-based cluster naming}\\
           $K_e=16$ diverse exemplars, $\lambda=0.7$\\
-          LLM backend: 0.956 avg BERTScore-F1\\
-          \hg{$+0.012$ over random selection} (budget-controlled)
+          LLM backend: \textbf{0.924} avg BERTScore-F1\\
+          \hg{$+0.016$ over random selection} (budget-controlled)
       \end{enumerate}
     \end{column}
     \begin{column}{0.38\textwidth}
@@ -1661,7 +1662,7 @@
       at (current page.center) {Questions \& Discussion Welcome};
     \node[font=\small,white!80,align=center,yshift=-2.8cm]
       at (current page.center){%
-        Nguyen Minh Khoa \quad
+        Nguyen Anh Khoa \quad
         \texttt{18520923@gm.uit.edu.vn} \\[4pt]
         \textit{Span2Type: Open World Named Entity Recognition with Automatic Entity Naming}};
   \end{tikzpicture}
@@ -1758,6 +1759,73 @@
     Hardware & 2$\times$ GPU \\
     \bottomrule
   \end{tabular}
+\end{frame}
+
+% ------------------------------------------------------------------
+% APPENDIX E — AMI EXPLAINED
+% ------------------------------------------------------------------
+\begin{frame}{Appendix E — AMI: Adjusted Mutual Information}
+  \begin{columns}[T]
+    \begin{column}{0.54\textwidth}
+      \textbf{What it measures}\\[2pt]
+      \small
+      Given gold types $U$ and predicted clusters $V$, AMI asks:\\[2pt]
+      \emph{"How much does a span's cluster reveal its true type, \textbf{beyond chance}?"}\\[5pt]
+
+      \textbf{Formula}\\[2pt]
+      \footnotesize
+      \[
+        \mathrm{AMI}(U,V) =
+          \frac{MI(U,V) - \mathbb{E}[MI]}
+               {\tfrac{1}{2}[H(U)+H(V)] - \mathbb{E}[MI]}
+      \]
+      \small
+      \begin{itemize}
+        \setlength{\itemsep}{2pt}
+        \item $MI$ — shared information between the two clusterings
+        \item $\mathbb{E}[MI]$ — expected MI under random permutation
+        \item $H$ — entropy (normaliser)
+      \end{itemize}
+      \vspace{4pt}
+      \textbf{Why not F1?}\\[2pt]
+      Open-world NER outputs \textit{Cluster 3}, not \textit{"ORG"}. AMI evaluates \textbf{partition structure} without requiring label alignment.
+    \end{column}
+    \begin{column}{0.44\textwidth}
+      \textbf{Toy example}\\[4pt]
+      \footnotesize
+      \begin{tabular}{lll}
+        \toprule
+        \textbf{Span} & \textbf{Gold} & \textbf{Cluster} \\
+        \midrule
+        OpenAI  & ORG  & C2 \\
+        Google  & ORG  & C2 \\
+        DeepMind& ORG  & C2 \\
+        Turing  & PER  & C5 \\
+        LeCun   & PER  & C5 \\
+        Python  & MISC & C8 \\
+        \bottomrule
+      \end{tabular}
+      \vspace{6pt}
+
+      C2 $\leftrightarrow$ ORG, C5 $\leftrightarrow$ PER, C8 $\leftrightarrow$ MISC\\
+      \hg{$\Rightarrow$ AMI $\approx$ 1.0 (perfect)}\\[10pt]
+
+      If all spans $\to$ one cluster:\\
+      \hg{$\Rightarrow$ AMI $\approx$ 0 (random)}\\[10pt]
+
+      \textbf{Span2Type results}\\[3pt]
+      \begin{tabular}{lr}
+        \toprule
+        System & Avg AMI \\
+        \midrule
+        OWNER (baseline) & 49.4 \\
+        \rowcolor{gold!25}
+        \textbf{Span2Type} & \textbf{61.4} \\
+        Gain & \hg{$+12.0$} \\
+        \bottomrule
+      \end{tabular}
+    \end{column}
+  \end{columns}
 \end{frame}
 
 \end{document}
