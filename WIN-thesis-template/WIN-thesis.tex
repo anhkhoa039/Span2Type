@@ -210,21 +210,59 @@ Open-world NER removes these constraints entirely: the model receives an unannot
 
 \section{Multi-View Span Detection}
 
-Early mention detectors for NER adopt BIO sequence labeling~\cite{ma-hovy-2016-end}, which classifies each token as Beginning, Inside, or Outside an entity. Span-based extractors~\cite{zhong-chen-2021-frustratingly} instead enumerate candidate spans and score them directly, offering better handling of overlapping and nested entities---a practical concern in open-world domains where type boundaries are not predefined and entity mentions may share tokens~\cite{li-etal-2020-unified}. Complementary decoding views have been proposed to capture different aspects of entity boundaries: Start-End classifiers mark the first and last token of each entity, while Tie-or-Break classifiers model whether adjacent tokens belong to the same span.
+Early mention detectors for NER adopt BIO sequence labeling~\cite{ma-hovy-2016-end}, which classifies each token as Beginning, Inside, or Outside an entity. For example, in the sentence \textit{``New York City is home to many banks''}, BIO tagging labels \texttt{New} as B, \texttt{York} and \texttt{City} as I, and all remaining tokens as O. While this suffices for simple proper nouns, multi-token technical terms such as \textit{``convolutional neural network''} or \textit{``support vector machine''} require the tagger to correctly chain three or more consecutive I labels---an error in any one position breaks the span.
 
-The Divide-and-Transfer (DTrans) paradigm~\cite{zhang-etal-2024-dtrans} combines all three views — BIO, Start-End, and Tie-or-Break — in a single BERT encoder, jointly trained with a Mean Teaching strategy (exponential moving average) to stabilize cross-domain transfer. This multi-view design produces a union of candidate spans that is more robust to diverse entity surface forms than any single decoder. This thesis replaces OWNER’s BIO-only detector with DTrans, directly motivated by its stronger cross-domain span recall.
+Span-based extractors~\cite{zhong-chen-2021-frustratingly} instead enumerate candidate spans and score them directly, offering better handling of overlapping and nested entities---a practical concern in open-world domains where type boundaries are not predefined and entity mentions may share tokens~\cite{li-etal-2020-unified}. Complementary decoding views have been proposed to capture different aspects of entity boundaries: Start-End (SE) classifiers mark the first and last token of each entity independently (so \texttt{New} is tagged as Start and \texttt{City} as End), while Tie-or-Break (TB) classifiers predict for each adjacent token pair whether the two tokens belong to the same span (Tie) or cross a boundary (Break). Compared to a BIO tagger that must propagate state across the full span, SE and TB signals are local: they depend on at most two tokens, making them more stable when surface forms change across domains.
+
+The Divide-and-Transfer (DTrans) paradigm~\cite{zhang-etal-2024-dtrans} combines all three views---BIO, SE, and TB---in a single BERT encoder jointly trained with a Mean Teaching strategy (exponential moving average) to stabilize cross-domain transfer. At inference time, the final span set is the \emph{union} of candidates decoded from each view: if BIO misses a span that TB correctly identifies as a contiguous block, the union still captures it. This design produces a candidate pool with higher recall than any single decoder alone. This thesis replaces OWNER’s BIO-only detector with DTrans, directly motivated by its stronger cross-domain span recall.
+
+\paragraph{Why multi-view decoding helps in open-world settings.}
+In closed-world NER, the type inventory is fixed, so the tagger can memorize domain-specific surface patterns. In open-world NER, target entity surfaces are unseen during training, making memorization impossible. The SE and TB decoders capture structural properties of entity boundaries---start/end positions and token adjacency---that are more domain-invariant than the sequential context encoded by BIO. This structural generalization is the core reason DTrans outperforms BIO-only detectors when source and target domains diverge.
+
+\section{Fill-in-the-Blank Prompts for Entity Typing}\label{sec:related_template}
+
+\subsection{From Knowledge Probing to Entity Representation}
+
+The fill-in-the-blank (cloze) prompting approach for entity typing originates from the LAMA (Language Model Analysis) benchmark~\cite{petroni-etal-2019-language}, which showed that pretrained masked language models (MLMs) encode factual world knowledge implicitly in their parameters. Given the prompt \textit{``The capital of France is \texttt{[MASK]}''}, BERT predicts \textit{Paris} without any fine-tuning---demonstrating that relational knowledge can be extracted by choosing the right template and reading the \texttt{[MASK]}-position prediction.
+
+Jiang et al.~\cite{jiang-etal-2020-know} extended this idea systematically, showing that the choice of template wording significantly affects the quality of the elicited knowledge. Templates that closely mirror the pretraining data distribution perform best. For entity typing specifically, the template:
+\begin{equation*}
+    \textit{``\{sentence\} \{entity\} is a \texttt{[MASK]}.''}
+\end{equation*}
+is effective because (i)~the phrase \textit{``X is a \texttt{[MASK]}''} matches the copula-predicate construction common in definitional sentences in BERT’s pretraining corpus (Wikipedia, BookCorpus), and (ii)~repeating the entity surface form after the full sentence provides the model with two complementary signals: the sentence-level context and a direct referential cue about which span to type.
+
+\paragraph{Concrete example.}
+Consider the sentence \textit{``BERT was introduced by Google researchers in 2018''} and the detected span \textit{BERT}. The template expands to:
+\begin{center}
+\texttt{[CLS] BERT was introduced by Google researchers in 2018 BERT is a [MASK] . [SEP]}
+\end{center}
+BERT (the model) reads this sequence and predicts the token that best completes the blank. Given the sentence context, top predictions include \textit{model}, \textit{system}, \textit{framework}---all semantically appropriate entity type labels. The hidden state at the \texttt{[MASK]} position captures this type-specific prediction distribution and is used as the entity embedding $\mathbf{e}_s$. Two entities of the same type (e.g., \textit{BERT} and \textit{GPT}) will produce similar \texttt{[MASK]} embeddings because both predict similar type tokens; entities of different types (e.g., \textit{BERT} the model vs.\ \textit{Jeff Dean} the person) will predict different tokens and produce dissimilar embeddings. This makes the \texttt{[MASK]}-position representation inherently type-discriminative---a property that BIC-guided $k$-means can exploit for clustering.
+
+\subsection{Why This Template Over Alternatives}
+
+Several template designs are possible. A naive approach would use the span embedding directly (e.g., mean-pooling token hidden states), but this encodes surface-form similarity rather than semantic type: \textit{New York} and \textit{London} would be close (both city names, similar capitalization patterns) but no closer than \textit{New York} and \textit{New Balance} (same first token). The fill-in-the-blank template avoids this by asking the model to \emph{predict a type word}, which activates type-level knowledge from pretraining rather than surface-level lexical similarity.
+
+Alternative templates such as \textit{``\{entity\} is a type of \texttt{[MASK]}''} or \textit{``\{entity\} belongs to the category of \texttt{[MASK]}''} are also valid, but the sentence-contextualized form \textit{``\{sentence\} \{entity\} is a \texttt{[MASK]}''} is preferred because it provides the surrounding sentence as context---essential when the entity surface form alone is ambiguous (e.g., \textit{Mercury} could be a planet, a chemical element, or a music band depending on context).
 
 \section{Parameter-Efficient Entity Typing}
 
-Entity typing with masked language models exploits the knowledge encoded in pretrained BERT by filling a cloze template such as \emph{``\{sentence\} \{entity\} is a \texttt{[MASK]}’’} and reading the top predicted token as a type label~\cite{petroni-etal-2019-language, jiang-etal-2020-know}. The \texttt{[MASK]}-position embedding serves as a type-sensitive representation that can be refined with contrastive learning~\cite{wang-etal-2023-crossner}.
+Full fine-tuning of the BERT encoder updates all $\sim$110M parameters, which is expensive and prone to overfitting when source-domain training data is limited. Parameter-efficient alternatives prepend a small set of trainable \emph{soft prompt} tokens to the input while keeping the backbone frozen. Prefix-tuning~\cite{li-liang-2021-prefix} and P-tuning~\cite{liu-etal-2022-ptuning} demonstrate that this reduces trainable parameters by orders of magnitude with minimal performance loss, and the Power of Scale result~\cite{lester-etal-2021-power} shows prompt tuning matches full fine-tuning at sufficient model scale. Alternative parameter-efficient approaches include adapter layers~\cite{houlsby-etal-2019-parameter}, which insert small trainable bottleneck modules between transformer layers, and LoRA~\cite{hu-etal-2022-lora}, which reparameterizes weight updates as low-rank matrices; both achieve strong performance but require architectural modifications to the backbone. This thesis adopts soft prompt tuning due to its zero architectural overhead and direct compatibility with the existing fill-in-the-blank entity typing template. This thesis introduces a two-stage soft prompt schedule for entity typing, where the prompt warms up with the backbone frozen before a careful full-model fine-tuning phase.
 
-Full fine-tuning of the BERT encoder updates all $\sim$110M parameters, which is expensive and prone to overfitting when source-domain training data is limited. Parameter-efficient alternatives prepend a small set of trainable \emph{soft prompt} tokens to the input while keeping the backbone frozen. Prefix-tuning~\cite{li-liang-2021-prefix} and P-tuning~\cite{liu-etal-2022-ptuning} demonstrate that this reduces trainable parameters by orders of magnitude with minimal performance loss, and the Power of Scale result~\cite{lester-etal-2021-power} shows prompt tuning matches full fine-tuning at sufficient model scale. Alternative parameter-efficient approaches include adapter layers~\cite{houlsby-etal-2019-parameter}, which insert small trainable bottleneck modules between transformer layers, and LoRA~\cite{hu-etal-2022-lora}, which reparameterizes weight updates as low-rank matrices; both achieve strong performance but require architectural modifications to the backbone. This thesis adopts soft prompt tuning due to its zero architectural overhead and direct compatibility with the existing BERT fill-in-the-blank entity typing template. This thesis introduces a two-stage soft prompt schedule for entity typing, where the prompt warms up with the backbone frozen before a careful full-model fine-tuning phase.
+\paragraph{Intuition for soft prompts.}
+A soft prompt token is a trainable vector in the same embedding space as word tokens, but it is not tied to any word in the vocabulary---it is an abstract ``instruction'' that the model learns to interpret. Concretely, prepending $N_p = 5$ soft tokens to the template input is analogous to writing a short task-specific preamble before the sentence: the frozen BERT encoder reads these tokens and adjusts its attention patterns accordingly, without any of its own weights changing. The soft tokens act as a learned signal that nudges the model toward producing more type-discriminative \texttt{[MASK]} representations for the entity typing objective.
 
 \section{Automatic Cluster Naming}
 
-Once entity clusters are formed, assigning human-readable type names is essential for interpretability. The original OWNER approach applies a fill-in-the-blank BERT MLM template to \emph{all} entities in each cluster and selects the most frequently predicted token across all predictions as the cluster name~\cite{wang-etal-2023-crossner}. LLM-based naming~\cite{brown-etal-2020-language} offers richer, multi-word labels by prompting a generative model with cluster examples, as demonstrated by systems such as GOLLiE~\cite{sainz-etal-2023-gollie}.
+Once entity clusters are formed, assigning human-readable type names is essential for interpretability. Without names, the output of an open-world NER system is a mapping from entity spans to anonymous cluster identifiers (e.g., \textit{Cluster 3}, \textit{Cluster 7}), which carries no semantic content and cannot be used by downstream systems or validated by domain experts.
 
-A key challenge in both backends is exemplar selection: which cluster members to include in the prompt. The quality of in-context examples has been shown to substantially affect LLM output in information extraction tasks~\cite{brown-etal-2020-language}: poorly chosen examples introduce noise, while diverse, representative examples elicit more accurate and generalizable predictions. Centroid-nearest selection can produce redundant examples that repeat the same surface form, while random sampling may miss the cluster’s full semantic range. Maximal Marginal Relevance (MMR)~\cite{carbonell-goldstein-1998-use} addresses this by iteratively selecting items that are both relevant to a query (here, the cluster centroid) and dissimilar to already-selected items. Originally proposed for extractive document summarization, MMR has since been applied to in-context example selection and retrieval-augmented generation; this thesis applies it to entity cluster exemplar selection to improve the stability and specificity of both MLM and LLM naming.
+\paragraph{MLM-based naming.}
+The original OWNER approach applies the fill-in-the-blank BERT template to \emph{all} entities in each cluster and selects the most frequently predicted token across all predictions as the cluster name~\cite{wang-etal-2023-crossner}. For example, if a cluster contains \textit{Einstein}, \textit{Newton}, and \textit{Darwin}, the MLM might predict \textit{physicist}, \textit{mathematician}, and \textit{biologist} respectively; majority voting selects \textit{physicist} as the cluster name (or \textit{scientist} if the template is conditioned on broader context). This approach is fast and requires no external model, but is constrained to single-token predictions.
+
+\paragraph{LLM-based naming.}
+LLM-based naming~\cite{brown-etal-2020-language} offers richer, multi-word labels by prompting a generative model with cluster examples, as demonstrated by systems such as GOLLiE~\cite{sainz-etal-2023-gollie}. For the same cluster, an LLM prompt such as \textit{``Given the entities \{Einstein, Newton, Darwin\}, predict the entity type''} might return \textit{``historical scientist''} or \textit{``famous researcher''}---labels that a single \texttt{[MASK]} token cannot express.
+
+\paragraph{Exemplar selection.}
+A key challenge in both backends is exemplar selection: which cluster members to include in the prompt. The quality of in-context examples has been shown to substantially affect LLM output in information extraction tasks~\cite{brown-etal-2020-language}: poorly chosen examples introduce noise, while diverse, representative examples elicit more accurate and generalizable predictions. Centroid-nearest selection can produce redundant examples that repeat the same surface form (e.g., selecting only \textit{Einstein}, \textit{Bohr}, and \textit{Heisenberg} for a physics cluster dominated by quantum physicists, missing chemists and biologists also in the cluster), while random sampling may miss the cluster’s dominant type. Maximal Marginal Relevance (MMR)~\cite{carbonell-goldstein-1998-use} addresses this by iteratively selecting items that are both relevant to a query (here, the cluster centroid) and dissimilar to already-selected items. Originally proposed for extractive document summarization, MMR has since been applied to in-context example selection and retrieval-augmented generation; this thesis applies it to entity cluster exemplar selection to improve the stability and specificity of both MLM and LLM naming.
 
 
 
@@ -345,7 +383,7 @@ At inference time, the three decoders independently decode span candidates from 
 
 \subsection{Fill-in-the-Blank Entity Representation}
 
-For each detected entity span $s = (i, j)$ in sentence $\mathbf{x}$, the entity typing stage constructs a type-sensitive representation by filling a template. The template used throughout this thesis is:
+For each detected entity span $s = (i, j)$ in sentence $\mathbf{x}$, the entity typing stage constructs a type-sensitive representation by filling a template. The rationale for this template design---rooted in the LAMA cloze-testing framework~\cite{petroni-etal-2019-language}---is discussed in Section~\ref{sec:related_template}. The template used throughout this thesis is:
 \begin{equation}
     \text{template}(s, \mathbf{x}) = \texttt{[CLS] } x_1 \cdots x_T \texttt{ } m \texttt{ is a [MASK] . [SEP]},
     \label{eq:template}
@@ -375,6 +413,11 @@ The entity encoder is fine-tuned on the source-domain training set using a \text
     \label{eq:triplet}
 \end{equation}
 where $\mathcal{T}$ is the set of valid triplets and $\gamma = 1.0$ is the margin. This objective pushes embeddings of the same type closer together and embeddings of different types further apart, yielding a metric space where $k$-means clustering recovers semantically coherent entity type groups.
+
+\begin{quote}\small
+\textbf{Example.}
+Suppose a batch contains three entities from CoNLL-2003: \textit{Obama} (PER), \textit{Biden} (PER), and \textit{Google} (ORG). The triplet $(\textit{Obama},\,\textit{Biden},\,\textit{Google})$ is valid: the anchor \textit{Obama} and the positive \textit{Biden} share the PER label, while the negative \textit{Google} has a different label (ORG). The loss term for this triplet is $\max(0,\;\|\mathbf{e}_{\text{Obama}}-\mathbf{e}_{\text{Biden}}\|_2 - \|\mathbf{e}_{\text{Obama}}-\mathbf{e}_{\text{Google}}\|_2 + 1.0)$. If \textit{Obama} is already closer to \textit{Biden} than to \textit{Google} by a margin of at least 1.0, the term is zero (no update needed). Otherwise, the gradient pushes \textit{Obama} and \textit{Biden} closer and \textit{Obama} and \textit{Google} further apart. After training, all PER embeddings cluster together and all ORG embeddings cluster separately---exactly the structure $k$-means needs to assign cluster identities.
+\end{quote}
 
 \subsection{Soft Prompt Variant}
 
@@ -537,12 +580,47 @@ We report metrics at three levels of the pipeline.
 We report span-level \textbf{Precision}, \textbf{Recall}, and \textbf{F1} on the test set of each target domain, using exact span match. This evaluates whether the multi-view DTrans detector transfers better than the OWNER BIO-only baseline.
 
 \paragraph{Entity Typing.}
-We report \textbf{Adjusted Mutual Information (AMI)}~\cite{vinh-etal-2010-ami} to measure clustering quality. AMI is a mapping-free metric: it does not require any cluster-to-type assignment and is robust to permutations of cluster labels, over-segmentation, and over-merging. Scores close to 0 indicate random clustering; scores close to 1 indicate near-perfect agreement with the gold partition. We follow the OWNER paper~\cite{wang-etal-2023-crossner} in using AMI as the primary entity typing metric.
+We report \textbf{Adjusted Mutual Information (AMI)}~\cite{vinh-etal-2010-ami} to measure clustering quality. AMI is a mapping-free metric: it does not require any cluster-to-type assignment and is robust to permutations of cluster labels, over-segmentation, and over-merging.
+
+Let $U = \{U_1,\ldots,U_R\}$ be the predicted clustering and $V = \{V_1,\ldots,V_C\}$ be the gold partition, both over $N$ entity spans. Define the empirical joint probability $p(i,j) = |U_i \cap V_j|/N$ and the marginals $p_U(i) = |U_i|/N$, $p_V(j) = |V_j|/N$. The \textbf{Mutual Information} between the two clusterings is:
+\begin{equation}
+    \text{MI}(U,V) = \sum_{i=1}^{R}\sum_{j=1}^{C} p(i,j)\,\log\frac{p(i,j)}{p_U(i)\,p_V(j)}.
+    \label{eq:mi}
+\end{equation}
+MI is large when predicted clusters align well with gold types but is inflated by chance when the number of clusters is large. AMI corrects for this by subtracting the expected MI under a random hypergeometric baseline~\cite{vinh-etal-2010-ami}:
+\begin{equation}
+    \text{AMI}(U,V) = \frac{\text{MI}(U,V) - \mathbb{E}[\text{MI}(U,V)]}{\frac{1}{2}\bigl[H(U) + H(V)\bigr] - \mathbb{E}[\text{MI}(U,V)]},
+    \label{eq:ami}
+\end{equation}
+where $H(U) = -\sum_i p_U(i)\log p_U(i)$ is the entropy of the predicted partition and $\mathbb{E}[\text{MI}]$ is the analytically derived expectation under the null hypothesis that $U$ and $V$ are drawn independently with fixed cluster sizes. AMI $\approx 0$ indicates random agreement; AMI $= 1$ indicates perfect agreement.
+
+\begin{quote}\small
+\textbf{Example.}
+Suppose $N = 6$ spans with gold types $V = \{\{s_1,s_2,s_3\},\{s_4,s_5,s_6\}\}$ (two perfect groups of 3) and the predicted clustering $U = \{\{s_1,s_2,s_3\},\{s_4,s_5,s_6\}\}$ perfectly matches. Then $\text{MI}(U,V) = \log 2 \approx 0.693$ and $H(U) = H(V) = \log 2$, giving $\text{AMI} = 1.0$. If instead $U$ randomly splits the spans as $\{\{s_1,s_3,s_5\},\{s_2,s_4,s_6\}\}$, $\text{MI}(U,V)$ approaches $\mathbb{E}[\text{MI}]$ and $\text{AMI} \approx 0$.
+\end{quote}
+
+We follow the OWNER paper~\cite{wang-etal-2023-crossner} in using AMI as the primary entity typing metric.
 
 \paragraph{Cluster Naming.}
-We evaluate predicted cluster names against gold entity type names using \textbf{BERTScore-F1}~\cite{zhang-etal-2020-bertscore}, which measures semantic similarity between predicted and reference names using contextual embeddings.
-Unlike exact-match accuracy, BERTScore-F1 awards partial credit for semantically close labels (e.g.\ \textit{researcher} vs.\ \textit{author}) and penalises completely wrong predictions, making it well-suited for evaluating open-vocabulary cluster names.
-Figure~\ref{fig:bertscore_bar} illustrates the score range: exact copies score 1.0, synonym paraphrases score $\approx 0.95$, and completely wrong labels score $\approx 0.86$ with RoBERTa-large embeddings.
+We evaluate predicted cluster names against gold entity type names using \textbf{BERTScore-F1}~\cite{zhang-etal-2020-bertscore}, which measures semantic similarity between predicted and reference strings using contextual token embeddings from a pretrained language model (RoBERTa-large by default).
+
+Let $\hat{y} = (\hat{y}_1, \ldots, \hat{y}_m)$ be the predicted name tokenised into $m$ tokens and $y = (y_1, \ldots, y_n)$ be the reference name tokenised into $n$ tokens. Each token is embedded by RoBERTa-large into a contextual vector $\mathbf{e}$. BERTScore computes pairwise cosine similarities and applies \emph{greedy matching}:
+\begin{align}
+    P_{\text{BERT}} &= \frac{1}{|\hat{y}|} \sum_{\hat{y}_j \in \hat{y}} \max_{y_i \in y}\, \cos(\mathbf{e}_{\hat{y}_j},\, \mathbf{e}_{y_i}),
+    \label{eq:bertscore_p} \\
+    R_{\text{BERT}} &= \frac{1}{|y|} \sum_{y_i \in y} \max_{\hat{y}_j \in \hat{y}}\, \cos(\mathbf{e}_{y_i},\, \mathbf{e}_{\hat{y}_j}),
+    \label{eq:bertscore_r} \\
+    F_{\text{BERT}} &= 2 \cdot \frac{P_{\text{BERT}} \cdot R_{\text{BERT}}}{P_{\text{BERT}} + R_{\text{BERT}}}.
+    \label{eq:bertscore_f}
+\end{align}
+Precision $P_{\text{BERT}}$ measures how well each predicted token matches some reference token; Recall $R_{\text{BERT}}$ measures how well each reference token is covered by some predicted token. Unlike exact-match accuracy, BERTScore awards partial credit for semantically close labels and penalises completely wrong predictions, making it well-suited for evaluating open-vocabulary cluster names.
+
+\begin{quote}\small
+\textbf{Example.}
+Given candidate \textit{``The cat is sitting on the mat''} and reference \textit{``There is a cat on the mat''}, RoBERTa-large greedily matches each token to its most similar counterpart (\textit{cat}$\leftrightarrow$\textit{cat}, \textit{sitting}$\leftrightarrow$\textit{is}, etc.), yielding $F_{\text{BERT}}=0.953$ despite different word order. By contrast, BLEU gives near-zero for a synonym paraphrase such as \textit{``The fast auburn fox leaps above the sleepy hound''} (reference: \textit{``The quick brown fox jumps over the lazy dog''}) because no n-gram matches, while BERTScore correctly assigns 0.952. In the NER naming context, \textit{``musician''} vs.\ gold \textit{``musicalartist''} scores $F_{\text{BERT}}\approx0.94$ (semantic credit), whereas a completely wrong prediction scores near the floor of $\approx0.86$.
+\end{quote}
+
+Figure~\ref{fig:bertscore_bar} illustrates the score range: exact copies score 1.0, synonym paraphrases score $\approx 0.95$, and completely wrong labels score $\approx 0.86$ with RoBERTa-large embeddings. Because all scores are compressed into the range $[0.86, 1.0]$, differences of even 0.01--0.02 in BERTScore-F1 are meaningful and correspond to discernible semantic proximity.
 
 \begin{figure}[ht]
   \centering
