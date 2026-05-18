@@ -61,9 +61,13 @@
 \titlespacing*{\chapter}{0pt}{0pt}{12pt}
 % Custom section format with 16pt font size
 \titleformat{\section}
-  {\normalfont\fontsize{16pt}{16pt}\selectfont\bfseries} % Set font size to 16pt
+  {\normalfont\fontsize{16pt}{16pt}\selectfont\bfseries}
   {\thesection}{1em}{}
 \titlespacing*{\section}{0pt}{0.5\baselineskip}{0\baselineskip}
+\titleformat{\subsection}
+  {\normalfont\fontsize{14pt}{14pt}\selectfont\bfseries}
+  {\thesubsection}{1em}{}
+\titlespacing*{\subsection}{0pt}{0.5\baselineskip}{0\baselineskip}
 \linespread{1.5}\selectfont
 
 % Custom command to remove chapter spacing
