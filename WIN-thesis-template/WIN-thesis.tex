@@ -92,17 +92,18 @@
 \AtBeginDocument{\setlength{\originaltextwidth}{\textwidth}}
 
 % WATERMARK SETUP - PROPER VERSION
-\backgroundsetup{
-    contents={\includegraphics{Logo.jpg}},
-    scale=1,
-    angle=0,
-    opacity=0.5,
-    position=current page.north west, % Anchor at top-left of page
-    hshift=3.8cm + 0.5\originaltextwidth, % Center in text area
-    vshift=-0.5\paperheight, % Vertical center
-    pages=all, % Explicitly apply to all pages
-    color=black % Important for proper opacity rendering
-}
+%\backgroundsetup{
+%    contents={\includegraphics{Logo.jpg}},
+%    scale=1,
+%    angle=0,
+%    opacity=0.5,
+%    position=current page.north west, % Anchor at top-left of page
+%    hshift=3.8cm + 0.5\originaltextwidth, % Center in text area
+%    vshift=-0.5\paperheight, % Vertical center
+%    pages=all, % Explicitly apply to all pages
+%    color=black % Important for proper opacity rendering
+%}
+\backgroundsetup{contents={}}
 
 \begin{document}
 %\nocite{*}
@@ -140,8 +141,14 @@
 
 \tableofcontents
 
+\clearpage
+\phantomsection
+\addcontentsline{toc}{chapter}{\listtablename}
 \listoftables
 
+\clearpage
+\phantomsection
+\addcontentsline{toc}{chapter}{\listfigurename}
 \listoffigures
 \clearpage	
 

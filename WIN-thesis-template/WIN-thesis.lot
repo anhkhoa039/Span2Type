@@ -1,0 +1,14 @@
+\babel@toc {english}{}\relax 
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsline {table}{\numberline {3.1}{\ignorespaces Notation used in this chapter.\relax }}{19}{table.caption.9}%
+\addvspace {10\p@ }
+\contentsline {table}{\numberline {4.1}{\ignorespaces Dataset statistics. \#Train / \#Dev / \#Test denote the number of sentences (CoNLL-2003) or documents (CrossNER). \#Types is the number of gold entity type labels. ``---'' denotes a split that is not used.\relax }}{32}{table.caption.10}%
+\contentsline {table}{\numberline {4.2}{\ignorespaces Comparison of NER methods across CrossNER domains (AMI score). Best results are in \textbf {bold}.\relax }}{38}{table.caption.12}%
+\contentsline {table}{\numberline {4.3}{\ignorespaces Mention detection evaluation results for different architectures trained on CoNLL and tested on five $\mathcal {D}^{\mathrm {T}}$ datasets. Performance is measured using the F1 score. Best results are in bold.\relax }}{40}{table.caption.13}%
+\contentsline {table}{\numberline {4.4}{\ignorespaces Cluster naming quality (BERTScore-F1, RoBERTa-large) per CrossNER domain. OWNER (single-template MLM) uses all cluster entities; OWNER (LLM) and all Span2Type variants use $n{=}16$ entities per cluster (random selection for OWNER (LLM); centroid-nearest or MMR-selected for Span2Type). \textbf {Bold} = best per column.\relax }}{42}{table.caption.14}%
+\contentsline {table}{\numberline {4.5}{\ignorespaces Qualitative cluster naming examples across CrossNER domains. \textit {BERT (MLM)} uses majority-vote over all cluster entities; \textit {LLM (MMR)} uses Span2Type with $n{=}16$ MMR-selected exemplars. \textsuperscript {$\dagger $} = degenerate BERT artefact (\textit {vegetarian} appears in a small subset of predicted clusters across all domains). \textsuperscript {$\ddagger $} = compound GT label.\relax }}{45}{table.caption.15}%
+\contentsline {table}{\numberline {4.6}{\ignorespaces Span2Type-LLM (MMR) per-cluster naming results --- Literature domain (14 clusters). GT Label is the CrossNER entity type with the highest entity count in each cluster. \color@box {}{green!15}{green} $F_1 \geq 0.99$, \color@box {}{yellow!25}{yellow} $0.90 \leq F_1 < 0.99$, \color@box {}{red!15}{red} $F_1 < 0.90$.\relax }}{47}{table.caption.16}%
+\contentsline {table}{\numberline {4.7}{\ignorespaces Ablation study of Span2Type components across different domains. Performance is measured using AMI score. Best results are in bold.\relax }}{49}{table.caption.18}%
+\addvspace {10\p@ }
